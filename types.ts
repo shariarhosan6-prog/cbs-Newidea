@@ -1,3 +1,4 @@
+
 export enum MessageType {
   TEXT = 'text',
   IMAGE = 'image',
@@ -19,18 +20,37 @@ export type MessageThread = 'source' | 'upstream';
 // CRM specific types
 export type ViewState = 'dashboard' | 'pipeline' | 'inbox' | 'partners' | 'finance';
 
-export type ApplicationStage = 'lead' | 'evidence_collection' | 'mediator_review' | 'rto_submission' | 'certified';
+// UPDATED: Combined Stages for both workflows
+export type ApplicationStage = 
+  // RPL Stages
+  | 'lead' 
+  | 'evidence_collection' 
+  | 'mediator_review' 
+  | 'rto_submission' 
+  | 'certified'
+  // Admission Stages
+  | 'app_lodged'
+  | 'conditional_offer'
+  | 'gte_assessment'
+  | 'tuition_payment'
+  | 'coe_issued';
+
+export type ApplicationType = 'rpl' | 'admission';
 
 export interface ApplicationCard {
   id: string;
+  type: ApplicationType; // New field to distinguish
   clientName: string;
-  avatar: string;
+  avatar?: string;
   qualification: string;
   stage: ApplicationStage;
-  source: string;
-  value: number;
-  lastUpdate: Date;
+  tags: string[];
+  source?: string;
+  value: string;
+  lastUpdate?: Date;
+  daysInStage: number;
   missingDocs: number;
+  counselor: string;
 }
 
 export interface DashboardStats {
