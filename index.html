@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0084FF" />
+    <meta name="theme-color" content="#ffffff" />
     <title>Stitch RPL CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -14,15 +14,20 @@
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
             },
+            boxShadow: {
+              'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'glow': '0 0 15px rgba(59, 130, 246, 0.5)',
+            },
             colors: {
               messenger: {
-                blue: '#0084FF',
-                light: '#F5F7FA',
-                dark: '#1E2127',
-                green: '#00C851',
-                orange: '#FF8800',
-                red: '#FF4444',
-                purple: '#7B68EE',
+                blue: '#2563EB', // Vibrant tech blue
+                light: '#F8FAFC', // Slate 50
+                dark: '#0F172A', // Slate 900
+                green: '#10B981', // Emerald 500
+                orange: '#F59E0B', // Amber 500
+                red: '#EF4444', // Red 500
+                purple: '#8B5CF6', // Violet 500
+                gray: '#F1F5F9', // Slate 100
               }
             }
           }
@@ -32,18 +37,23 @@
     <style>
       /* Custom scrollbar for Webkit */
       ::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
+        width: 5px;
+        height: 5px;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #D1D5DB;
-        border-radius: 3px;
+        background: #E2E8F0;
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #9CA3AF;
+        background: #CBD5E1;
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
       }
     </style>
   <script type="importmap">
@@ -58,7 +68,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-50 text-slate-900 antialiased overflow-hidden">
+  <body class="bg-gray-50 text-slate-900 antialiased overflow-hidden selection:bg-messenger-blue selection:text-white">
     <div id="root"></div>
   </body>
 </html>
