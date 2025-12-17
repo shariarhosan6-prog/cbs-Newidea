@@ -1,48 +1,185 @@
 import React, { useState } from 'react';
 import { MOCK_COMMISSIONS, MOCK_COUNSELORS } from '../constants';
 import { CommissionRecord, TransactionType } from '../types';
-import { DollarSign, ArrowUpRight, ArrowDownLeft, Users, Building2, TrendingUp, Search, Filter, Calendar, Briefcase, Download, ChevronRight } from 'lucide-react';
+import { 
+    DollarSign, ArrowUpRight, ArrowDownLeft, Users, Building2, TrendingUp, 
+    Search, Filter, Calendar, Briefcase, Download, ChevronRight, 
+    CheckCircle2, Clock, AlertCircle, PieChart, Wallet, ChevronDown
+} from 'lucide-react';
 
 const Finance: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'overview' | 'receivables' | 'payables' | 'team'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'earnings' | 'payouts' | 'staff'>('overview');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
+    const [dateFilter, setDateFilter] = useState<'this_month' | 'last_month' | 'quarter' | 'all'>('all');
+    const [searchTerm, setSearchTerm] = useState('');
     
-    // Calculations
+    // --- Calculations ---
     const totalIncoming = MOCK_COMMISSIONS.filter(c => c.type === 'incoming').reduce((acc, curr) => acc + curr.amount, 0);
     const totalOutgoingSub = MOCK_COMMISSIONS.filter(c => c.type === 'outgoing_sub_agent').reduce((acc, curr) => acc + curr.amount, 0);
     const totalOutgoingStaff = MOCK_COMMISSIONS.filter(c => c.type === 'outgoing_staff').reduce((acc, curr) => acc + curr.amount, 0);
     const totalOutgoing = totalOutgoingSub + totalOutgoingStaff;
     const netProfit = totalIncoming - totalOutgoing;
+    
+    const pendingIncoming = MOCK_COMMISSIONS.filter(c => c.type === 'incoming' && c.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+    const pendingOutgoing = MOCK_COMMISSIONS.filter(c => c.type !== 'incoming' && c.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
 
-    const filteredTransactions = MOCK_COMMISSIONS.filter(tx => {
-        if (activeTab === 'receivables') return tx.type === 'incoming';
-        if (activeTab === 'payables') return tx.type !== 'incoming';
-        return true;
-    });
+    const totalPaidIncoming = totalIncoming - pendingIncoming;
+    const totalPaidOutgoing = totalOutgoing - pendingOutgoing;
+    const incomingProgress = totalIncoming > 0 ? (totalPaidIncoming / totalIncoming) * 100 : 0;
+    const outgoingProgress = totalOutgoing > 0 ? (totalPaidOutgoing / totalOutgoing) * 100 : 0;
+
+    // --- Filtering Logic ---
+    const getFilteredTransactions = () => {
+        return MOCK_COMMISSIONS.filter(tx => {
+            // Tab Filter
+            if (activeTab === 'earnings' && tx.type !== 'incoming') return false;
+            if (activeTab === 'payouts' && tx.type !== 'outgoing_sub_agent') return false;
+            if (activeTab === 'staff' && tx.type !== 'outgoing_staff') return false;
+
+            // Status Filter
+            if (statusFilter !== 'all' && tx.status !== statusFilter) return false;
+
+            // Search Filter
+            if (searchTerm && !tx.clientName.toLowerCase().includes(searchTerm.toLowerCase()) && !tx.relatedEntityName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+
+            // Date Filter (Mock logic for demo)
+            // In a real app, compare tx.dueDate with actual dates
+            return true; 
+        });
+    };
+
+    const filteredTransactions = getFilteredTransactions();
+
+    const renderTransactionTable = () => (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
+                        <tr>
+                            <th className="px-6 py-4">Client / Reference</th>
+                            <th className="px-6 py-4">
+                                {activeTab === 'earnings' ? 'Source (RTO/Super Agent)' : 
+                                 activeTab === 'payouts' ? 'Sub-Agent' : 
+                                 activeTab === 'staff' ? 'Counselor' : 'Entity'}
+                            </th>
+                            <th className="px-6 py-4">Due Date</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4 text-right">Amount</th>
+                            <th className="px-6 py-4"></th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-50">
+                        {filteredTransactions.map(tx => (
+                            <tr key={tx.id} className="hover:bg-slate-50/80 transition-colors group">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold
+                                            ${tx.type === 'incoming' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}
+                                        `}>
+                                            {tx.clientName.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-slate-800">{tx.clientName}</div>
+                                            <div className="text-xs text-slate-400">{tx.description}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-2">
+                                        {tx.type === 'incoming' && <Building2 className="w-4 h-4 text-slate-400" />}
+                                        {tx.type === 'outgoing_sub_agent' && <Users className="w-4 h-4 text-slate-400" />}
+                                        {tx.type === 'outgoing_staff' && <Briefcase className="w-4 h-4 text-slate-400" />}
+                                        <span className="font-medium text-slate-700">{tx.relatedEntityName}</span>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-slate-500 font-medium font-mono text-xs">
+                                    {tx.dueDate.toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {tx.status === 'paid' && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> Paid
+                                        </span>
+                                    )}
+                                    {tx.status === 'pending' && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
+                                            <Clock className="w-3.5 h-3.5" /> Pending
+                                        </span>
+                                    )}
+                                    {tx.status === 'overdue' && (
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-100">
+                                            <AlertCircle className="w-3.5 h-3.5" /> Overdue
+                                        </span>
+                                    )}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <span className={`text-sm font-bold ${tx.type === 'incoming' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                        {tx.type === 'incoming' ? '+' : '-'}${tx.amount.toLocaleString()}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <button className="text-slate-400 hover:text-messenger-blue transition-colors">
+                                        <ChevronRight className="w-4 h-4" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {filteredTransactions.length === 0 && (
+                 <div className="p-12 text-center">
+                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                         <Search className="w-8 h-8" />
+                     </div>
+                     <h3 className="text-slate-900 font-bold mb-1">No transactions found</h3>
+                     <p className="text-slate-500 text-sm">Try adjusting your filters or search terms.</p>
+                 </div>
+            )}
+        </div>
+    );
 
     return (
         <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-hidden">
             {/* Header */}
-            <div className="p-8 bg-white border-b border-slate-100 flex justify-between items-start">
+            <div className="px-8 py-6 bg-white border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Commission & Finance Hub</h1>
-                    <p className="text-slate-500 text-sm mt-1">Track incoming commissions from RTOs and manage payouts to Sub-Agents & Counselors.</p>
+                    <h1 className="text-2xl font-bold text-slate-900">Commission Hub</h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wide">Agent View</span>
+                        <p className="text-slate-500 text-sm">Track your earnings and manage partner payouts.</p>
+                    </div>
                 </div>
-                <button className="flex items-center gap-2 bg-slate-100 text-slate-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-200 transition-colors">
-                    <Download className="w-4 h-4" /> Export Report
-                </button>
+                <div className="flex gap-3">
+                    <button className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
+                        <Calendar className="w-4 h-4" /> Schedule Report
+                    </button>
+                    <button className="flex items-center gap-2 bg-messenger-blue text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 shadow-lg shadow-blue-200 transition-colors">
+                        <Download className="w-4 h-4" /> Export CSV
+                    </button>
+                </div>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="px-8 border-b border-slate-200 bg-white">
-                <div className="flex gap-8">
-                    {['overview', 'receivables', 'payables', 'team'].map((tab) => (
+            <div className="px-8 bg-white border-b border-slate-200 sticky top-0 z-10">
+                <div className="flex gap-8 overflow-x-auto no-scrollbar">
+                    {[
+                        { id: 'overview', label: 'Overview' },
+                        { id: 'earnings', label: 'My Earnings', icon: TrendingUp },
+                        { id: 'payouts', label: 'Sub-Agent Payouts', icon: Users },
+                        { id: 'staff', label: 'Staff Commission', icon: Briefcase },
+                    ].map((tab) => (
                         <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab as any)}
-                            className={`py-4 text-sm font-bold capitalize relative transition-colors ${activeTab === tab ? 'text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`py-4 text-sm font-bold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap
+                                ${activeTab === tab.id 
+                                    ? 'text-messenger-blue border-messenger-blue' 
+                                    : 'text-slate-500 border-transparent hover:text-slate-700 hover:border-slate-200'}
+                            `}
                         >
-                            {tab}
-                            {activeTab === tab && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600 rounded-t-full"></div>}
+                            {tab.icon && <tab.icon className="w-4 h-4" />}
+                            {tab.label}
                         </button>
                     ))}
                 </div>
@@ -51,167 +188,242 @@ const Finance: React.FC = () => {
             {/* Main Content Area */}
             <div className="flex-1 overflow-y-auto p-8">
                 
-                {/* 1. STATS OVERVIEW CARDS */}
-                {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        {/* INCOMING */}
-                        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <ArrowDownLeft className="w-24 h-24 text-emerald-500" />
+                {/* Filters Toolbar */}
+                {activeTab !== 'overview' && (
+                    <div className="flex flex-wrap items-center justify-between gap-4 mb-6 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-2">
+                            {/* Status Filter */}
+                            <div className="relative group">
+                                <select 
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value as any)}
+                                    className="appearance-none bg-white border border-slate-200 text-slate-700 text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-messenger-blue/20 cursor-pointer hover:border-messenger-blue/30 transition-colors"
+                                >
+                                    <option value="all">All Statuses</option>
+                                    <option value="paid">Paid</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="overdue">Overdue</option>
+                                </select>
+                                <Filter className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                             </div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600"><Building2 className="w-5 h-5" /></div>
-                                <span className="text-sm font-bold text-slate-500">From RTOs / Super Agents</span>
-                            </div>
-                            <h3 className="text-3xl font-bold text-slate-800">${totalIncoming.toLocaleString()}</h3>
-                            <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
-                                <TrendingUp className="w-3 h-3" /> +12% this month
-                            </p>
-                        </div>
 
-                        {/* OUTGOING */}
-                        <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <ArrowUpRight className="w-24 h-24 text-red-500" />
-                            </div>
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className="p-2 bg-red-50 rounded-lg text-red-600"><Users className="w-5 h-5" /></div>
-                                <span className="text-sm font-bold text-slate-500">To Sub-Agents & Staff</span>
-                            </div>
-                            <h3 className="text-3xl font-bold text-slate-800">${totalOutgoing.toLocaleString()}</h3>
-                            <div className="flex gap-3 mt-2">
-                                <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-md font-semibold">
-                                    Sub-Agents: ${totalOutgoingSub.toLocaleString()}
-                                </span>
-                                <span className="text-[10px] bg-orange-50 text-orange-600 px-2 py-0.5 rounded-md font-semibold">
-                                    Staff: ${totalOutgoingStaff.toLocaleString()}
-                                </span>
+                            {/* Date Filter */}
+                            <div className="relative group">
+                                <select 
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value as any)}
+                                    className="appearance-none bg-white border border-slate-200 text-slate-700 text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-messenger-blue/20 cursor-pointer hover:border-messenger-blue/30 transition-colors"
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="this_month">This Month</option>
+                                    <option value="last_month">Last Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                </select>
+                                <Calendar className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                             </div>
                         </div>
 
-                        {/* NET PROFIT */}
-                        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 shadow-lg relative overflow-hidden text-white">
-                             <div className="absolute -right-4 -bottom-4 w-32 h-32 bg-blue-500 rounded-full blur-3xl opacity-20"></div>
-                             <div className="flex items-center gap-2 mb-2 relative z-10">
-                                <div className="p-2 bg-white/10 rounded-lg"><DollarSign className="w-5 h-5" /></div>
-                                <span className="text-sm font-bold text-slate-300">Net Profit (Estimated)</span>
-                            </div>
-                            <h3 className="text-3xl font-bold relative z-10">${netProfit.toLocaleString()}</h3>
-                            <p className="text-xs text-slate-400 mt-2 relative z-10">
-                                Based on active deals in pipeline.
-                            </p>
+                        {/* Search */}
+                        <div className="relative">
+                            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input 
+                                type="text" 
+                                placeholder="Search client or partner..." 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-messenger-blue/20 w-64 transition-all"
+                            />
                         </div>
                     </div>
                 )}
 
-                {/* 2. TEAM PERFORMANCE VIEW */}
-                {activeTab === 'team' ? (
-                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* 1. OVERVIEW TAB */}
+                {activeTab === 'overview' && (
+                    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+                        {/* 1. KEY METRICS ROW */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* REVENUE */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><ArrowDownLeft className="w-24 h-24 text-emerald-600" /></div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg"><DollarSign className="w-5 h-5" /></div>
+                                        <span className="text-sm font-bold text-slate-500">Total Revenue</span>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-slate-900">${totalIncoming.toLocaleString()}</h3>
+                                </div>
+                                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+                                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${incomingProgress}%` }}></div>
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold mt-2">
+                                    <span className="text-emerald-600">{Math.round(incomingProgress)}% Collected</span>
+                                    <span className="text-slate-400">${pendingIncoming.toLocaleString()} Pending</span>
+                                </div>
+                            </div>
+
+                            {/* PAYOUTS */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between h-40 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><ArrowUpRight className="w-24 h-24 text-red-600" /></div>
+                                <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-2 bg-red-50 text-red-600 rounded-lg"><Users className="w-5 h-5" /></div>
+                                        <span className="text-sm font-bold text-slate-500">Total Payouts</span>
+                                    </div>
+                                    <h3 className="text-3xl font-bold text-slate-900">${totalOutgoing.toLocaleString()}</h3>
+                                </div>
+                                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+                                    <div className="bg-red-500 h-full rounded-full" style={{ width: `${outgoingProgress}%` }}></div>
+                                </div>
+                                <div className="flex justify-between text-[10px] font-bold mt-2">
+                                    <span className="text-red-600">{Math.round(outgoingProgress)}% Paid Out</span>
+                                    <span className="text-slate-400">${pendingOutgoing.toLocaleString()} Pending</span>
+                                </div>
+                            </div>
+
+                             {/* NET PROFIT */}
+                            <div className="bg-slate-900 p-6 rounded-2xl shadow-lg shadow-slate-200 flex flex-col justify-between h-40 relative overflow-hidden text-white">
+                                 <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-messenger-blue rounded-full opacity-20 blur-2xl"></div>
+                                 <div>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="p-2 bg-white/10 text-white rounded-lg"><Wallet className="w-5 h-5" /></div>
+                                        <span className="text-sm font-bold text-slate-300">Net Profit</span>
+                                    </div>
+                                    <h3 className="text-4xl font-bold tracking-tight">${netProfit.toLocaleString()}</h3>
+                                </div>
+                                <div className="flex items-center gap-2 text-xs font-medium text-slate-400 relative z-10">
+                                    <TrendingUp className="w-4 h-4 text-emerald-400" />
+                                    <span className="text-emerald-400 font-bold">+12.5%</span> vs last month
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. VISUAL BREAKDOWN */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Cash Flow Chart */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="font-bold text-slate-800">Cash Flow Overview</h3>
+                                    <div className="flex gap-3">
+                                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                                             <div className="w-2 h-2 rounded-full bg-emerald-500"></div> In
+                                         </div>
+                                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                                             <div className="w-2 h-2 rounded-full bg-red-500"></div> Out
+                                         </div>
+                                    </div>
+                                </div>
+                                <div className="h-48 flex items-end justify-between gap-4 px-2">
+                                     {[
+                                        { m: 'Jan', in: 65, out: 40 },
+                                        { m: 'Feb', in: 45, out: 30 },
+                                        { m: 'Mar', in: 80, out: 55 },
+                                        { m: 'Apr', in: 70, out: 45 },
+                                        { m: 'May', in: 90, out: 60 },
+                                        { m: 'Jun', in: totalIncoming/100 * 5, out: totalOutgoing/100 * 5 }, // Fake scale based on current mock
+                                     ].map((item, i) => (
+                                         <div key={i} className="flex-1 flex flex-col justify-end gap-1 h-full group">
+                                             <div className="flex gap-1 h-full items-end justify-center w-full">
+                                                 <div style={{height: `${Math.min(item.in, 100)}%`}} className="w-3 bg-emerald-500 rounded-t-sm opacity-80 group-hover:opacity-100 transition-opacity relative"></div>
+                                                 <div style={{height: `${Math.min(item.out, 100)}%`}} className="w-3 bg-red-400 rounded-t-sm opacity-80 group-hover:opacity-100 transition-opacity relative"></div>
+                                             </div>
+                                             <span className="text-[10px] text-center font-bold text-slate-400 mt-2">{item.m}</span>
+                                         </div>
+                                     ))}
+                                </div>
+                            </div>
+                            
+                            {/* Status Breakdown */}
+                            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                                <h3 className="font-bold text-slate-800 mb-6">Pending vs Paid</h3>
+                                <div className="flex-1 flex flex-col justify-center gap-6">
+                                    {/* Receivables */}
+                                    <div>
+                                        <div className="flex justify-between text-xs font-bold mb-2">
+                                            <span className="text-slate-600">Receivables (Incoming)</span>
+                                            <span className="text-slate-800">${totalIncoming.toLocaleString()}</span>
+                                        </div>
+                                        <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                            <div style={{width: `${incomingProgress}%`}} className="bg-emerald-500 h-full flex items-center justify-center text-[9px] font-bold text-white/90">
+                                                {Math.round(incomingProgress) > 15 ? 'PAID' : ''}
+                                            </div>
+                                            <div className="flex-1 bg-amber-400 h-full flex items-center justify-center text-[9px] font-bold text-white/90">
+                                                {100 - Math.round(incomingProgress) > 15 ? 'PENDING' : ''}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                     {/* Payables */}
+                                     <div>
+                                        <div className="flex justify-between text-xs font-bold mb-2">
+                                            <span className="text-slate-600">Payables (Outgoing)</span>
+                                            <span className="text-slate-800">${totalOutgoing.toLocaleString()}</span>
+                                        </div>
+                                        <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex">
+                                             <div style={{width: `${outgoingProgress}%`}} className="bg-red-500 h-full flex items-center justify-center text-[9px] font-bold text-white/90">
+                                                {Math.round(outgoingProgress) > 15 ? 'PAID' : ''}
+                                             </div>
+                                             <div className="flex-1 bg-amber-400 h-full flex items-center justify-center text-[9px] font-bold text-white/90">
+                                                {100 - Math.round(outgoingProgress) > 15 ? 'PENDING' : ''}
+                                             </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. RECENT TRANSACTIONS */}
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                            <h3 className="text-lg font-bold text-slate-900 mb-4">Recent Transactions</h3>
+                            {renderTransactionTable()}
+                        </div>
+                    </div>
+                )}
+
+                {/* 2. SPECIFIC LIST TABS */}
+                {activeTab !== 'overview' && activeTab !== 'staff' && (
+                    renderTransactionTable()
+                )}
+
+                {/* 3. STAFF TEAM TAB */}
+                {activeTab === 'staff' && (
+                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4">
                          {MOCK_COUNSELORS.map(counselor => (
-                             <div key={counselor.id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center gap-5">
-                                 <img src={counselor.avatar} alt={counselor.name} className="w-16 h-16 rounded-full ring-4 ring-slate-50" />
-                                 <div className="flex-1">
-                                     <div className="flex justify-between items-start">
-                                         <div>
-                                            <h3 className="font-bold text-slate-900 text-lg">{counselor.name}</h3>
-                                            <p className="text-xs text-slate-500 font-medium">Sales Counselor</p>
+                             <div key={counselor.id} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all group">
+                                 <div className="flex items-start gap-4">
+                                     <img src={counselor.avatar} alt={counselor.name} className="w-14 h-14 rounded-full ring-4 ring-slate-50 group-hover:scale-105 transition-transform" />
+                                     <div className="flex-1">
+                                         <div className="flex justify-between items-start">
+                                             <div>
+                                                <h3 className="font-bold text-slate-900 text-lg">{counselor.name}</h3>
+                                                <p className="text-xs text-slate-500 font-medium">Sales Counselor</p>
+                                             </div>
+                                             <div className="text-right">
+                                                 <span className="block text-xl font-bold text-messenger-blue">${counselor.commissionEarned.toLocaleString()}</span>
+                                                 <span className="text-[10px] text-slate-400 uppercase tracking-wide font-bold">Earned</span>
+                                             </div>
                                          </div>
-                                         <div className="text-right">
-                                             <span className="block text-lg font-bold text-emerald-600">${counselor.commissionEarned.toLocaleString()}</span>
-                                             <span className="text-[10px] text-slate-400 uppercase tracking-wide">Commission Earned</span>
-                                         </div>
-                                     </div>
-                                     
-                                     <div className="mt-4 grid grid-cols-2 gap-4">
-                                         <div className="bg-slate-50 rounded-lg p-2">
-                                             <span className="block text-slate-400 text-[10px] font-bold uppercase">Total Sales</span>
-                                             <span className="text-sm font-bold text-slate-700">${counselor.totalSales.toLocaleString()}</span>
-                                         </div>
-                                         <div className="bg-slate-50 rounded-lg p-2">
-                                             <span className="block text-slate-400 text-[10px] font-bold uppercase">Active Deals</span>
-                                             <span className="text-sm font-bold text-slate-700">{counselor.activeDeals} Files</span>
+                                         
+                                         <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                                             <div>
+                                                 <span className="block text-slate-400 text-[10px] font-bold uppercase mb-1">Total Sales</span>
+                                                 <span className="text-sm font-bold text-slate-700 bg-slate-50 px-2 py-1 rounded-md">${counselor.totalSales.toLocaleString()}</span>
+                                             </div>
+                                             <div>
+                                                 <span className="block text-slate-400 text-[10px] font-bold uppercase mb-1">Performance</span>
+                                                 <span className="text-sm font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md flex items-center gap-1 w-fit">
+                                                     <TrendingUp className="w-3 h-3" /> High
+                                                 </span>
+                                             </div>
                                          </div>
                                      </div>
                                  </div>
                              </div>
                          ))}
                      </div>
-                ) : (
-                    /* 3. TRANSACTIONS LIST (Ledger) */
-                    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                            <h3 className="font-bold text-slate-700 text-sm">Transaction Ledger</h3>
-                            <div className="flex gap-2">
-                                <button className="p-1.5 text-slate-400 hover:bg-white rounded-md transition-colors"><Search className="w-4 h-4" /></button>
-                                <button className="p-1.5 text-slate-400 hover:bg-white rounded-md transition-colors"><Filter className="w-4 h-4" /></button>
-                            </div>
-                        </div>
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-100">
-                                <tr>
-                                    <th className="px-6 py-3">Client / Reference</th>
-                                    <th className="px-6 py-3">Entity (From/To)</th>
-                                    <th className="px-6 py-3">Type</th>
-                                    <th className="px-6 py-3">Due Date</th>
-                                    <th className="px-6 py-3">Status</th>
-                                    <th className="px-6 py-3 text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {filteredTransactions.map(tx => (
-                                    <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="font-bold text-slate-800">{tx.clientName}</div>
-                                            <div className="text-xs text-slate-400">{tx.description}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`p-1 rounded-md ${tx.type === 'incoming' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'}`}>
-                                                    {tx.type === 'incoming' ? <Building2 className="w-3.5 h-3.5" /> : <Users className="w-3.5 h-3.5" />}
-                                                </div>
-                                                <span className="font-medium text-slate-700">{tx.relatedEntityName}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wide border
-                                                ${tx.type === 'incoming' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
-                                                : tx.type === 'outgoing_sub_agent' ? 'bg-purple-50 text-purple-700 border-purple-100'
-                                                : 'bg-blue-50 text-blue-700 border-blue-100'
-                                                }
-                                            `}>
-                                                {tx.type === 'incoming' ? 'Receivable' : tx.type === 'outgoing_sub_agent' ? 'Sub-Agent Payout' : 'Staff Bonus'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500 font-medium">
-                                            {tx.dueDate.toLocaleDateString()}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {tx.status === 'paid' && <span className="flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" /> Paid</span>}
-                                            {tx.status === 'pending' && <span className="flex items-center gap-1 text-xs font-bold text-amber-500"><Clock className="w-3.5 h-3.5" /> Pending</span>}
-                                            {tx.status === 'overdue' && <span className="flex items-center gap-1 text-xs font-bold text-red-500"><AlertCircle className="w-3.5 h-3.5" /> Overdue</span>}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <span className={`font-bold ${tx.type === 'incoming' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                                                {tx.type === 'incoming' ? '+' : '-'}${tx.amount.toLocaleString()}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        {filteredTransactions.length === 0 && (
-                             <div className="p-8 text-center text-slate-400">
-                                 No transactions found for this filter.
-                             </div>
-                        )}
-                    </div>
                 )}
             </div>
         </div>
     );
 };
-
-// Required Icons for status
-import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 export default Finance;
