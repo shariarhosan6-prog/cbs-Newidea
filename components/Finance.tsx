@@ -1,36 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MOCK_COMMISSIONS, MOCK_COUNSELORS } from '../constants';
 import { CommissionRecord, TransactionType } from '../types';
 import { 
     DollarSign, ArrowUpRight, ArrowDownLeft, Users, Building2, TrendingUp, 
     Search, Filter, Calendar, Briefcase, Download, ChevronRight, 
-    CheckCircle2, Clock, AlertCircle, PieChart, Wallet, ChevronDown
+    CheckCircle2, Clock, AlertCircle, PieChart, Wallet, ChevronDown,
+    Zap, Loader2, Bell, Mail, FileCheck, X
 } from 'lucide-react';
 
+// Augmented Mock Data for Demo Purposes
+const EXTRA_MOCKS: CommissionRecord[] = [
+    { id: 'tx_auto_1', clientId: 'u5', clientName: 'John Doe', description: 'Sub-Agent Fee', amount: 450, type: 'outgoing_sub_agent', status: 'pending', dueDate: new Date('2024-05-20'), relatedEntityName: 'VisaFast Agency' },
+    { id: 'tx_auto_2', clientId: 'u6', clientName: 'Jane Smith', description: 'Counselor Bonus', amount: 200, type: 'outgoing_staff', status: 'pending', dueDate: new Date('2024-05-25'), relatedEntityName: 'Tom Hardy' },
+];
+
 const Finance: React.FC = () => {
+    // State
+    const [transactions, setTransactions] = useState<CommissionRecord[]>([...MOCK_COMMISSIONS, ...EXTRA_MOCKS]);
     const [activeTab, setActiveTab] = useState<'overview' | 'earnings' | 'payouts' | 'staff'>('overview');
     const [statusFilter, setStatusFilter] = useState<'all' | 'paid' | 'pending' | 'overdue'>('all');
     const [dateFilter, setDateFilter] = useState<'this_month' | 'last_month' | 'quarter' | 'all'>('all');
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Automation State
+    const [isAutomationOpen, setIsAutomationOpen] = useState(false);
+    const [automationStatus, setAutomationStatus] = useState<'idle' | 'scanning' | 'processing' | 'complete'>('idle');
+    const [automationLogs, setAutomationLogs] = useState<{msg: string, type: 'info' | 'success' | 'action', time: string}[]>([]);
+    const [processingIds, setProcessingIds] = useState<string[]>([]);
     
-    // --- Calculations ---
-    const totalIncoming = MOCK_COMMISSIONS.filter(c => c.type === 'incoming').reduce((acc, curr) => acc + curr.amount, 0);
-    const totalOutgoingSub = MOCK_COMMISSIONS.filter(c => c.type === 'outgoing_sub_agent').reduce((acc, curr) => acc + curr.amount, 0);
-    const totalOutgoingStaff = MOCK_COMMISSIONS.filter(c => c.type === 'outgoing_staff').reduce((acc, curr) => acc + curr.amount, 0);
+    // --- Calculations based on current state ---
+    const totalIncoming = transactions.filter(c => c.type === 'incoming').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalOutgoingSub = transactions.filter(c => c.type === 'outgoing_sub_agent').reduce((acc, curr) => acc + curr.amount, 0);
+    const totalOutgoingStaff = transactions.filter(c => c.type === 'outgoing_staff').reduce((acc, curr) => acc + curr.amount, 0);
     const totalOutgoing = totalOutgoingSub + totalOutgoingStaff;
     const netProfit = totalIncoming - totalOutgoing;
     
-    const pendingIncoming = MOCK_COMMISSIONS.filter(c => c.type === 'incoming' && c.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
-    const pendingOutgoing = MOCK_COMMISSIONS.filter(c => c.type !== 'incoming' && c.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+    const pendingIncoming = transactions.filter(c => c.type === 'incoming' && c.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
+    const pendingOutgoing = transactions.filter(c => c.type !== 'incoming' && c.status === 'pending').reduce((acc, curr) => acc + curr.amount, 0);
 
     const totalPaidIncoming = totalIncoming - pendingIncoming;
     const totalPaidOutgoing = totalOutgoing - pendingOutgoing;
     const incomingProgress = totalIncoming > 0 ? (totalPaidIncoming / totalIncoming) * 100 : 0;
     const outgoingProgress = totalOutgoing > 0 ? (totalPaidOutgoing / totalOutgoing) * 100 : 0;
 
+    // --- Automation Logic ---
+    const addLog = (msg: string, type: 'info' | 'success' | 'action' = 'info') => {
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        setAutomationLogs(prev => [{msg, type, time}, ...prev]);
+    };
+
+    const runPayoutAutomation = () => {
+        setIsAutomationOpen(true);
+        setAutomationStatus('scanning');
+        setAutomationLogs([]);
+        addLog("Initiating Smart Payout Protocol v2.1...", 'info');
+
+        setTimeout(() => {
+            // Step 1: Scan
+            const eligible = transactions.filter(t => 
+                t.status === 'pending' && 
+                (t.type === 'outgoing_sub_agent' || t.type === 'outgoing_staff')
+            );
+
+            if (eligible.length === 0) {
+                addLog("Scan complete. No eligible pending payouts found.", 'success');
+                setAutomationStatus('complete');
+                return;
+            }
+
+            addLog(`Scan complete. Found ${eligible.length} eligible transactions for payout.`, 'action');
+            setAutomationStatus('processing');
+
+            // Step 2: Process each
+            let processedCount = 0;
+            eligible.forEach((tx, idx) => {
+                setTimeout(() => {
+                    setProcessingIds(prev => [...prev, tx.id]);
+                    addLog(`Processing Payout #${tx.id} for ${tx.relatedEntityName} ($${tx.amount})`, 'info');
+                    
+                    // Simulate Workflow Steps
+                    setTimeout(() => {
+                        addLog(`→ Invoice generated & sent to Finance Team`, 'info');
+                    }, 500);
+
+                    setTimeout(() => {
+                        addLog(`→ Notification sent to ${tx.relatedEntityName} (via Email/SMS)`, 'info');
+                    }, 1000);
+
+                    setTimeout(() => {
+                        // Finalize
+                        setTransactions(prev => prev.map(item => 
+                            item.id === tx.id ? { ...item, status: 'paid' } : item
+                        ));
+                        setProcessingIds(prev => prev.filter(id => id !== tx.id));
+                        addLog(`✓ Payout #${tx.id} Approved & Initiated`, 'success');
+                        
+                        processedCount++;
+                        if (processedCount === eligible.length) {
+                            setAutomationStatus('complete');
+                            addLog("All payouts processed successfully. Workflow complete.", 'success');
+                        }
+                    }, 2000);
+
+                }, idx * 2500);
+            });
+
+        }, 1500);
+    };
+
     // --- Filtering Logic ---
     const getFilteredTransactions = () => {
-        return MOCK_COMMISSIONS.filter(tx => {
+        return transactions.filter(tx => {
             // Tab Filter
             if (activeTab === 'earnings' && tx.type !== 'incoming') return false;
             if (activeTab === 'payouts' && tx.type !== 'outgoing_sub_agent') return false;
@@ -42,8 +122,6 @@ const Finance: React.FC = () => {
             // Search Filter
             if (searchTerm && !tx.clientName.toLowerCase().includes(searchTerm.toLowerCase()) && !tx.relatedEntityName.toLowerCase().includes(searchTerm.toLowerCase())) return false;
 
-            // Date Filter (Mock logic for demo)
-            // In a real app, compare tx.dueDate with actual dates
             return true; 
         });
     };
@@ -69,61 +147,65 @@ const Finance: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {filteredTransactions.map(tx => (
-                            <tr key={tx.id} className="hover:bg-slate-50/80 transition-colors group">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold
-                                            ${tx.type === 'incoming' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}
-                                        `}>
-                                            {tx.clientName.charAt(0)}
+                        {filteredTransactions.map(tx => {
+                            const isProcessing = processingIds.includes(tx.id);
+                            return (
+                                <tr key={tx.id} className={`hover:bg-slate-50/80 transition-colors group ${isProcessing ? 'bg-blue-50/50' : ''}`}>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold transition-all
+                                                ${isProcessing ? 'scale-110 ring-2 ring-blue-400' : ''}
+                                                ${tx.type === 'incoming' ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}
+                                            `}>
+                                                {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : tx.clientName.charAt(0)}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-slate-800">{tx.clientName}</div>
+                                                <div className="text-xs text-slate-400">{tx.description}</div>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="font-bold text-slate-800">{tx.clientName}</div>
-                                            <div className="text-xs text-slate-400">{tx.description}</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            {tx.type === 'incoming' && <Building2 className="w-4 h-4 text-slate-400" />}
+                                            {tx.type === 'outgoing_sub_agent' && <Users className="w-4 h-4 text-slate-400" />}
+                                            {tx.type === 'outgoing_staff' && <Briefcase className="w-4 h-4 text-slate-400" />}
+                                            <span className="font-medium text-slate-700">{tx.relatedEntityName}</span>
                                         </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        {tx.type === 'incoming' && <Building2 className="w-4 h-4 text-slate-400" />}
-                                        {tx.type === 'outgoing_sub_agent' && <Users className="w-4 h-4 text-slate-400" />}
-                                        {tx.type === 'outgoing_staff' && <Briefcase className="w-4 h-4 text-slate-400" />}
-                                        <span className="font-medium text-slate-700">{tx.relatedEntityName}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-slate-500 font-medium font-mono text-xs">
-                                    {tx.dueDate.toLocaleDateString()}
-                                </td>
-                                <td className="px-6 py-4">
-                                    {tx.status === 'paid' && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Paid
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-500 font-medium font-mono text-xs">
+                                        {tx.dueDate.toLocaleDateString()}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {tx.status === 'paid' && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 animate-in zoom-in">
+                                                <CheckCircle2 className="w-3.5 h-3.5" /> Paid
+                                            </span>
+                                        )}
+                                        {tx.status === 'pending' && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
+                                                <Clock className="w-3.5 h-3.5" /> Pending
+                                            </span>
+                                        )}
+                                        {tx.status === 'overdue' && (
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-100">
+                                                <AlertCircle className="w-3.5 h-3.5" /> Overdue
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <span className={`text-sm font-bold ${tx.type === 'incoming' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                            {tx.type === 'incoming' ? '+' : '-'}${tx.amount.toLocaleString()}
                                         </span>
-                                    )}
-                                    {tx.status === 'pending' && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-100">
-                                            <Clock className="w-3.5 h-3.5" /> Pending
-                                        </span>
-                                    )}
-                                    {tx.status === 'overdue' && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-100">
-                                            <AlertCircle className="w-3.5 h-3.5" /> Overdue
-                                        </span>
-                                    )}
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <span className={`text-sm font-bold ${tx.type === 'incoming' ? 'text-emerald-600' : 'text-slate-700'}`}>
-                                        {tx.type === 'incoming' ? '+' : '-'}${tx.amount.toLocaleString()}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <button className="text-slate-400 hover:text-messenger-blue transition-colors">
-                                        <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-slate-400 hover:text-messenger-blue transition-colors">
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -140,7 +222,64 @@ const Finance: React.FC = () => {
     );
 
     return (
-        <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-hidden">
+        <div className="flex-1 flex flex-col h-full bg-slate-50 overflow-hidden relative">
+            
+            {/* --- AUTOMATION OVERLAY PANEL --- */}
+            {isAutomationOpen && (
+                <div className="absolute top-0 inset-x-0 z-30 bg-white border-b border-slate-200 shadow-xl animate-in slide-in-from-top-10 duration-300">
+                    <div className="p-6">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="flex items-center gap-2 text-lg font-bold text-slate-900">
+                                    <div className={`p-2 rounded-lg ${automationStatus === 'processing' ? 'bg-blue-100 text-blue-600 animate-pulse' : 'bg-slate-100 text-slate-600'}`}>
+                                        {automationStatus === 'processing' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Zap className="w-5 h-5" />}
+                                    </div>
+                                    Smart Payout Automation
+                                </h3>
+                                <p className="text-sm text-slate-500 mt-1">Processing scheduled payouts based on approval rules.</p>
+                            </div>
+                            <button 
+                                onClick={() => setIsAutomationOpen(false)} 
+                                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="bg-slate-900 rounded-xl p-4 h-48 overflow-y-auto custom-scrollbar font-mono text-xs space-y-2">
+                             {automationLogs.length === 0 && <span className="text-slate-500">Initializing logs...</span>}
+                             {automationLogs.map((log, i) => (
+                                 <div key={i} className="flex gap-3 animate-in fade-in slide-in-from-left-2">
+                                     <span className="text-slate-500 shrink-0">[{log.time}]</span>
+                                     <span className={`
+                                        ${log.type === 'success' ? 'text-emerald-400 font-bold' : 
+                                          log.type === 'action' ? 'text-blue-400 font-bold' : 'text-slate-300'}
+                                     `}>
+                                         {log.type === 'success' && '✓ '}
+                                         {log.msg}
+                                     </span>
+                                 </div>
+                             ))}
+                             {automationStatus === 'scanning' && (
+                                 <div className="flex gap-3 text-slate-500 animate-pulse">
+                                     <span>[...]</span>
+                                     <span>Scanning database for due dates...</span>
+                                 </div>
+                             )}
+                        </div>
+
+                        {automationStatus === 'complete' && (
+                            <div className="mt-4 flex justify-end">
+                                <button onClick={() => setIsAutomationOpen(false)} className="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200 text-sm">
+                                    Close Console
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+
             {/* Header */}
             <div className="px-8 py-6 bg-white border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
@@ -151,8 +290,12 @@ const Finance: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <button className="flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-slate-50 transition-colors">
-                        <Calendar className="w-4 h-4" /> Schedule Report
+                    <button 
+                        onClick={runPayoutAutomation}
+                        disabled={isAutomationOpen}
+                        className="flex items-center gap-2 bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-100 transition-all shadow-sm disabled:opacity-50"
+                    >
+                        <Zap className="w-4 h-4" /> Run Auto-Payouts
                     </button>
                     <button className="flex items-center gap-2 bg-messenger-blue text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-600 shadow-lg shadow-blue-200 transition-colors">
                         <Download className="w-4 h-4" /> Export CSV
