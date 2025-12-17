@@ -1,4 +1,4 @@
-import { Conversation, MessageType, SenderType, Partner } from './types';
+import { Conversation, MessageType, SenderType, Partner, CommissionRecord, Counselor } from './types';
 
 export const MOCK_PARTNERS: Partner[] = [
     {
@@ -233,4 +233,58 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
 
 export const PROGRESS_STEPS = [
   'Intake', 'Doc Check', 'Mediator Verified', 'Super Agent', 'Complete'
+];
+
+export const MOCK_COMMISSIONS: CommissionRecord[] = [
+    {
+        id: 'tx1',
+        clientId: 'u1',
+        clientName: 'Sarah Jenkins',
+        description: 'Commission from StudyPath RTO',
+        amount: 800,
+        type: 'incoming',
+        status: 'pending',
+        dueDate: new Date('2024-06-01'),
+        relatedEntityName: 'StudyPath RTO'
+    },
+    {
+        id: 'tx2',
+        clientId: 'u2',
+        clientName: 'Michael Chen',
+        description: 'Sub-Agent Payout',
+        amount: 300,
+        type: 'outgoing_sub_agent',
+        status: 'pending',
+        dueDate: new Date('2024-06-05'),
+        relatedEntityName: 'Global Ed Consultancy'
+    },
+    {
+        id: 'tx3',
+        clientId: 'u3',
+        clientName: 'Elena Rodriguez',
+        description: 'Counselor Incentive',
+        amount: 150,
+        type: 'outgoing_staff',
+        status: 'paid',
+        dueDate: new Date('2024-05-15'),
+        relatedEntityName: 'Jessica Wu'
+    },
+    {
+        id: 'tx4',
+        clientId: 'u4',
+        clientName: 'Raj Patel',
+        description: 'Commission from Melb Tech',
+        amount: 1200,
+        type: 'incoming',
+        status: 'paid',
+        dueDate: new Date('2024-05-20'),
+        relatedEntityName: 'Melbourne Tech Institute'
+    }
+];
+
+export const MOCK_COUNSELORS: Counselor[] = [
+    { id: 's1', name: 'Jessica Wu', avatar: 'https://ui-avatars.com/api/?name=Jessica+Wu&background=ffb6c1&color=fff', totalSales: 45000, commissionEarned: 4500, activeDeals: 12 },
+    { id: 's2', name: 'Tom Hardy', avatar: 'https://ui-avatars.com/api/?name=Tom+Hardy&background=add8e6&color=fff', totalSales: 32000, commissionEarned: 3200, activeDeals: 8 },
+    { id: 's3', name: 'Amanda Lee', avatar: 'https://ui-avatars.com/api/?name=Amanda+Lee&background=90ee90&color=fff', totalSales: 58000, commissionEarned: 5800, activeDeals: 15 },
+    { id: 's4', name: 'David Kim', avatar: 'https://ui-avatars.com/api/?name=David+Kim&background=f0e68c&color=fff', totalSales: 21000, commissionEarned: 2100, activeDeals: 5 },
 ];

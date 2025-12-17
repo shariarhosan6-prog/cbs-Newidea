@@ -112,3 +112,28 @@ export interface Partner {
   status: 'active' | 'inactive';
   logo: string;
 }
+
+// FINANCE TYPES
+export type TransactionType = 'incoming' | 'outgoing_sub_agent' | 'outgoing_staff';
+export type TransactionStatus = 'pending' | 'paid' | 'overdue';
+
+export interface CommissionRecord {
+    id: string;
+    clientId: string;
+    clientName: string;
+    description: string; // e.g., "Commission from StudyPath RTO"
+    amount: number;
+    type: TransactionType;
+    status: TransactionStatus;
+    dueDate: Date;
+    relatedEntityName: string; // Name of Sub-Agent or Counselor or RTO
+}
+
+export interface Counselor {
+    id: string;
+    name: string;
+    avatar: string;
+    totalSales: number;
+    commissionEarned: number;
+    activeDeals: number;
+}

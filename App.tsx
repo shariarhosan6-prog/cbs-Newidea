@@ -6,8 +6,9 @@ import ConversationList from './components/ConversationList';
 import ChatWindow from './components/ChatWindow';
 import ClientIntelligence from './components/ClientIntelligence';
 import Partners from './components/Partners';
+import Finance from './components/Finance'; // Imported Finance
 import { MOCK_CONVERSATIONS } from './constants';
-import { Conversation, MessageType, SenderType, MessageThread, ViewState } from './types';
+import { Conversation, MessageType, SenderType, MessageThread, ViewState, EducationEntry } from './types';
 import { Menu, X } from 'lucide-react';
 import { analyzeDocumentMock } from './services/geminiService';
 
@@ -115,6 +116,38 @@ function App() {
     }, 2000);
   };
 
+  const handleAddDocument = (name: string) => {
+    setConversations(prev => prev.map(c => {
+        if (c.id === selectedId) {
+            // Prevent duplicates
+            if (c.documents.some(d => d.name === name)) return c;
+            return {
+                ...c,
+                documents: [
+                    ...c.documents,
+                    { id: `d_${Date.now()}`, name, status: 'missing' }
+                ]
+            };
+        }
+        return c;
+    }));
+  };
+
+  const handleAddEducation = (edu: EducationEntry) => {
+    setConversations(prev => prev.map(c => {
+        if (c.id === selectedId) {
+            return {
+                ...c,
+                client: {
+                    ...c.client,
+                    educationHistory: [...(c.client.educationHistory || []), edu]
+                }
+            };
+        }
+        return c;
+    }));
+  };
+
   const renderContent = () => {
     switch (currentView) {
       case 'dashboard':
@@ -178,7 +211,12 @@ function App() {
                     >
                         <X className="w-5 h-5 text-slate-500" />
                     </button>
-                    <ClientIntelligence conversation={selectedConversation} isOpen={true} />
+                    <ClientIntelligence 
+                        conversation={selectedConversation} 
+                        isOpen={true} 
+                        onAddDocument={handleAddDocument}
+                        onAddEducation={handleAddEducation}
+                    />
                 </div>
             </div>
             
@@ -187,14 +225,7 @@ function App() {
       case 'partners':
         return <Partners />;
       case 'finance':
-        return (
-            <div className="flex-1 flex items-center justify-center bg-slate-50 text-slate-400">
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-slate-600 mb-2">Module Coming Soon</h2>
-                    <p>This module is currently under development.</p>
-                </div>
-            </div>
-        )
+        return <Finance />; // Integrated Finance Component
       default:
         return <Dashboard />;
     }
