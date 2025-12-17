@@ -60,6 +60,15 @@ export interface DocumentStatus {
   confidence?: number;
 }
 
+export interface EducationEntry {
+  id: string;
+  level: 'Year 10' | 'Year 12' | 'Diploma' | 'Bachelor' | 'Masters' | 'PhD';
+  institution: string;
+  startYear: number;
+  endYear: number;
+  isGapFiller?: boolean; // If true, this is work experience filling a gap
+}
+
 export interface ClientProfile {
   id: string;
   name: string;
@@ -71,6 +80,7 @@ export interface ClientProfile {
   visaExpiry: string;
   qualificationTarget: string;
   experienceYears: number;
+  educationHistory: EducationEntry[]; // New field for Gap Analysis
 }
 
 export interface Conversation {
@@ -89,4 +99,16 @@ export interface Conversation {
   documents: DocumentStatus[];
   paymentTotal: number;
   paymentPaid: number;
+}
+
+export interface Partner {
+  id: string;
+  name: string;
+  type: 'RTO' | 'Sub-Agent' | 'University';
+  contactPerson: string;
+  email: string;
+  activeStudents: number;
+  commissionRate: string; // e.g., "20%" or "$500 flat"
+  status: 'active' | 'inactive';
+  logo: string;
 }

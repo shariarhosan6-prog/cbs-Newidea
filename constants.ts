@@ -1,4 +1,51 @@
-import { Conversation, MessageType, SenderType } from './types';
+import { Conversation, MessageType, SenderType, Partner } from './types';
+
+export const MOCK_PARTNERS: Partner[] = [
+    {
+        id: 'p1',
+        name: 'StudyPath RTO',
+        type: 'RTO',
+        contactPerson: 'David Ross',
+        email: 'admissions@studypath.edu.au',
+        activeStudents: 12,
+        commissionRate: '25%',
+        status: 'active',
+        logo: 'https://ui-avatars.com/api/?name=Study+Path&background=6366f1&color=fff'
+    },
+    {
+        id: 'p2',
+        name: 'Global Ed Consultancy',
+        type: 'Sub-Agent',
+        contactPerson: 'Priya Kapoor',
+        email: 'priya@globaled.com',
+        activeStudents: 8,
+        commissionRate: '15%',
+        status: 'active',
+        logo: 'https://ui-avatars.com/api/?name=Global+Ed&background=f59e0b&color=fff'
+    },
+    {
+        id: 'p3',
+        name: 'Melbourne Tech Institute',
+        type: 'RTO',
+        contactPerson: 'Admin Team',
+        email: 'info@mti.edu.au',
+        activeStudents: 4,
+        commissionRate: '30%',
+        status: 'active',
+        logo: 'https://ui-avatars.com/api/?name=Melb+Tech&background=10b981&color=fff'
+    },
+    {
+        id: 'p4',
+        name: 'VisaFast Agency',
+        type: 'Sub-Agent',
+        contactPerson: 'John Li',
+        email: 'john@visafast.com',
+        activeStudents: 0,
+        commissionRate: '15%',
+        status: 'inactive',
+        logo: 'https://ui-avatars.com/api/?name=Visa+Fast&background=94a3b8&color=fff'
+    }
+];
 
 export const MOCK_CONVERSATIONS: Conversation[] = [
   {
@@ -14,6 +61,12 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       visaExpiry: '2024-11-15',
       qualificationTarget: 'Diploma of Project Management',
       experienceYears: 5,
+      educationHistory: [
+          { id: 'e1', level: 'Year 12', institution: 'Melbourne High', startYear: 2014, endYear: 2015 },
+          { id: 'e2', level: 'Bachelor', institution: 'RMIT University', startYear: 2016, endYear: 2019 },
+          // GAP HERE: 2019 to 2022 (3 years gap)
+          { id: 'e3', level: 'Masters', institution: 'Monash University', startYear: 2022, endYear: 2024 }
+      ]
     },
     source: 'direct',
     superAgentStatus: 'processing',
@@ -28,9 +81,10 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     documents: [
       { id: 'd1', name: 'Resume / CV', status: 'verified', uploadDate: new Date('2024-05-10'), confidence: 98 },
       { id: 'd2', name: 'Employment Reference 1', status: 'verified', uploadDate: new Date('2024-05-12'), confidence: 95 },
-      { id: 'd3', name: 'Employment Reference 2', status: 'pending', uploadDate: new Date('2024-05-14'), confidence: 40 },
       { id: 'd4', name: 'Photo ID', status: 'verified', uploadDate: new Date('2024-05-01'), confidence: 99 },
       { id: 'd5', name: 'USI Transcript', status: 'missing' },
+      // Added dynamically if gap found
+      { id: 'd_gap', name: 'Gap Explanation (2019-2022)', status: 'missing' }
     ],
     messages: [
       // --- THREAD: SOURCE (Student) ---
@@ -107,6 +161,10 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       visaExpiry: '2025-02-20',
       qualificationTarget: 'Cert IV in Commercial Cookery',
       experienceYears: 3,
+      educationHistory: [
+         { id: 'e1', level: 'Year 12', institution: 'Beijing High', startYear: 2020, endYear: 2021 },
+         { id: 'e2', level: 'Diploma', institution: 'Sydney TAFE', startYear: 2022, endYear: 2023 }
+      ]
     },
     source: 'sub_agent',
     subAgentName: 'Global Ed Consultancy',
@@ -156,6 +214,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       visaExpiry: 'N/A',
       qualificationTarget: 'Diploma of Early Childhood Education',
       experienceYears: 7,
+      educationHistory: []
     },
     source: 'direct',
     superAgentStatus: 'submitted',

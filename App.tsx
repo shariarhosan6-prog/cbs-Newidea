@@ -5,6 +5,7 @@ import Kanban from './components/Kanban';
 import ConversationList from './components/ConversationList';
 import ChatWindow from './components/ChatWindow';
 import ClientIntelligence from './components/ClientIntelligence';
+import Partners from './components/Partners';
 import { MOCK_CONVERSATIONS } from './constants';
 import { Conversation, MessageType, SenderType, MessageThread, ViewState } from './types';
 import { Menu, X } from 'lucide-react';
@@ -184,6 +185,7 @@ function App() {
           </div>
         );
       case 'partners':
+        return <Partners />;
       case 'finance':
         return (
             <div className="flex-1 flex items-center justify-center bg-slate-50 text-slate-400">
