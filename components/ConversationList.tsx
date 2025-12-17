@@ -1,6 +1,6 @@
 import React from 'react';
 import { Conversation } from '../types';
-import { Search, Circle, Clock, CheckCircle2, MessageSquare, Filter } from 'lucide-react';
+import { Search, Circle, Clock, CheckCircle2, MessageSquare, Filter, Building2, User } from 'lucide-react';
 
 interface Props {
   conversations: Conversation[];
@@ -46,7 +46,7 @@ const ConversationList: React.FC<Props> = ({ conversations, selectedId, onSelect
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 group-focus-within:text-messenger-blue transition-colors" />
           <input
             type="text"
-            placeholder="Search clients..."
+            placeholder="Search students..."
             className="w-full bg-slate-50 text-sm text-slate-700 rounded-xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-messenger-blue/20 focus:bg-white border border-transparent focus:border-messenger-blue/20 transition-all"
           />
         </div>
@@ -55,11 +55,11 @@ const ConversationList: React.FC<Props> = ({ conversations, selectedId, onSelect
       {/* Tabs */}
       <div className="flex px-5 py-2 gap-6 text-sm font-medium text-gray-400 border-b border-gray-50 mb-2">
         <button className="text-messenger-blue relative pb-2 transition-colors">
-            Active
+            All
             <span className="absolute bottom-0 left-0 w-full h-0.5 bg-messenger-blue rounded-full"></span>
         </button>
-        <button className="hover:text-slate-600 pb-2 transition-colors">Leads</button>
-        <button className="hover:text-slate-600 pb-2 transition-colors">Done</button>
+        <button className="hover:text-slate-600 pb-2 transition-colors">Direct</button>
+        <button className="hover:text-slate-600 pb-2 transition-colors">Sub-Agents</button>
       </div>
 
       {/* List */}
@@ -71,7 +71,7 @@ const ConversationList: React.FC<Props> = ({ conversations, selectedId, onSelect
             className={`
               relative p-3 rounded-xl flex items-start gap-3 cursor-pointer transition-all duration-200 group
               ${selectedId === conv.id 
-                ? 'bg-blue-50/80 shadow-sm' 
+                ? 'bg-blue-50/80 shadow-sm ring-1 ring-blue-100' 
                 : 'hover:bg-gray-50 border border-transparent'}
             `}
           >
@@ -95,6 +95,22 @@ const ConversationList: React.FC<Props> = ({ conversations, selectedId, onSelect
                     {new Date(conv.lastActive).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
+              
+              {/* Source Badge */}
+              <div className="flex items-center gap-1.5 mb-1.5">
+                 {conv.source === 'sub_agent' ? (
+                     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-purple-50/80 text-purple-700 text-[9px] font-bold tracking-wide border border-purple-100 uppercase">
+                         <Building2 className="w-2.5 h-2.5" />
+                         {conv.subAgentName || 'Sub-Agent'}
+                     </span>
+                 ) : (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-50/80 text-emerald-700 text-[9px] font-bold tracking-wide border border-emerald-100 uppercase">
+                         <User className="w-2.5 h-2.5" />
+                         Direct
+                     </span>
+                 )}
+              </div>
+
               <p className={`text-xs truncate mb-2 ${conv.unreadCount > 0 ? 'text-slate-800 font-medium' : 'text-slate-500'}`}>
                 {conv.messages[conv.messages.length - 1]?.content || 'No messages yet'}
               </p>

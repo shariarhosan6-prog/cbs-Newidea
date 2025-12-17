@@ -3,7 +3,7 @@ import { Conversation, DocumentStatus } from '../types';
 import { PROGRESS_STEPS } from '../constants';
 import { 
     User, FileText, CreditCard, Bot, ChevronDown, ChevronUp, 
-    CheckCircle, XCircle, Clock, Mail, FileCheck, ArrowRight, Sparkles, MoreHorizontal
+    CheckCircle, XCircle, Clock, Send, FileCheck, ArrowRight, Sparkles, MoreHorizontal, Building2, Globe
 } from 'lucide-react';
 
 interface Props {
@@ -36,6 +36,7 @@ const AccordionItem: React.FC<{
 const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
     // Accordion State
     const [openSections, setOpenSections] = useState({
+        channel: true,
         overview: true,
         docs: true,
         profile: false,
@@ -74,8 +75,9 @@ const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
                 <h2 className="text-xl font-bold text-slate-900 mb-1">{conversation.client.name}</h2>
                 <p className="text-sm text-slate-500 font-medium">{conversation.client.location}</p>
                 <div className="mt-5 flex justify-center gap-3">
-                    <button className="text-xs bg-slate-900 text-white px-5 py-2 rounded-xl font-semibold shadow-lg shadow-slate-200 hover:bg-slate-800 hover:scale-105 transition-all">
-                        Generate Report
+                    <button className="text-xs bg-slate-900 text-white px-5 py-2 rounded-xl font-semibold shadow-lg shadow-slate-200 hover:bg-slate-800 hover:scale-105 transition-all flex items-center gap-2">
+                        <Sparkles className="w-3 h-3 text-yellow-400" />
+                        Mediator Report
                     </button>
                     <button className="p-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
                         <MoreHorizontal className="w-4 h-4" />
@@ -85,16 +87,56 @@ const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
 
             {/* Content Area */}
             <div className="flex-1 p-5 space-y-4">
+
+                {/* 0. Channel Info (New for Mediator Logic) */}
+                <AccordionItem 
+                    title="Channel Info" 
+                    icon={<div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-indigo-100"><Globe className="w-4 h-4" /></div>}
+                    isOpen={openSections.channel}
+                    onToggle={() => toggleSection('channel')}
+                >
+                    <div className="space-y-3">
+                         <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                             <div className="flex items-center gap-3">
+                                 <div className={`p-2 rounded-lg ${conversation.source === 'sub_agent' ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                     {conversation.source === 'sub_agent' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
+                                 </div>
+                                 <div className="flex flex-col">
+                                     <span className="text-xs text-slate-500 font-medium">Source</span>
+                                     <span className="text-xs font-bold text-slate-800">
+                                         {conversation.source === 'sub_agent' ? conversation.subAgentName : 'Direct Student'}
+                                     </span>
+                                 </div>
+                             </div>
+                         </div>
+                         
+                         {/* Super Agent Action */}
+                         <div className="pt-2">
+                            <button className="w-full relative overflow-hidden group bg-gradient-to-r from-messenger-blue to-indigo-600 text-white p-3 rounded-xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
+                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                <div className="relative flex items-center justify-center gap-2 font-semibold text-xs">
+                                    <Send className="w-3.5 h-3.5" />
+                                    Submit to Super Agent
+                                </div>
+                            </button>
+                            <p className="text-[10px] text-center text-slate-400 mt-2">
+                                Status: <span className="font-medium text-slate-600 capitalize">{conversation.superAgentStatus.replace('_', ' ')}</span>
+                            </p>
+                         </div>
+                    </div>
+                </AccordionItem>
+
+
                 {/* 1. Status Overview */}
                 <AccordionItem 
-                    title="Status Overview" 
+                    title="Workflow Status" 
                     icon={<div className="w-6 h-6 rounded-lg bg-blue-50 text-messenger-blue flex items-center justify-center text-xs font-bold ring-1 ring-blue-100">%</div>}
                     isOpen={openSections.overview}
                     onToggle={() => toggleSection('overview')}
                 >
                     <div className="mt-2">
                         <div className="flex justify-between text-xs mb-2 font-semibold text-slate-600">
-                            <span>Progress</span>
+                            <span>Completion</span>
                             <span>{conversation.progressStage}%</span>
                         </div>
                         <div className="w-full bg-slate-100 rounded-full h-2.5 mb-6 relative overflow-hidden shadow-inner">
@@ -124,7 +166,8 @@ const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
                                              )}
                                              <div className={`w-2.5 h-2.5 rounded-full ring-4 ring-white transition-colors duration-500 ${isActive || isCompleted ? 'bg-messenger-blue shadow-sm' : 'bg-slate-200'}`}></div>
                                          </div>
-                                         <span className={`text-[10px] whitespace-nowrap px-2 py-0.5 rounded-md ${isActive ? 'bg-blue-50' : ''}`}>{step}</span>
+                                         {/* Only show label for active or first/last to save space if needed, or rotate */}
+                                         <span className={`text-[9px] text-center max-w-[50px] leading-tight ${isActive ? 'bg-blue-50 px-1 rounded' : ''}`}>{step}</span>
                                      </div>
                                  );
                              })}
@@ -143,22 +186,22 @@ const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
                         <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-xl p-3 shadow-sm">
                              <div className="flex items-center justify-between mb-2">
                                 <span className="text-xs font-bold text-messenger-purple flex items-center gap-1.5">
-                                    <Sparkles className="w-3.5 h-3.5" /> Auto-Analysis
+                                    <Sparkles className="w-3.5 h-3.5" /> Auto-Verify
                                 </span>
                                 <span className="text-[10px] font-semibold bg-white text-messenger-purple px-2 py-0.5 rounded-full border border-purple-100 shadow-sm">Active</span>
                              </div>
-                             <p className="text-xs text-slate-600 mb-3 leading-relaxed">Analyzing conversation for qualification gaps against updated standards.</p>
+                             <p className="text-xs text-slate-600 mb-3 leading-relaxed">Checking document validity before Super Agent submission.</p>
                              <div className="flex gap-2">
                                  <button className="flex-1 text-[10px] font-medium py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:border-messenger-purple hover:text-messenger-purple transition-all shadow-sm">
-                                    View Insights
+                                    View Gaps
                                  </button>
                              </div>
                         </div>
 
                         <div className="space-y-2 pt-1">
                             <button className="w-full text-left flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-xl text-xs font-medium text-slate-700 transition-colors border border-dashed border-slate-200 hover:border-messenger-blue group">
-                                <div className="p-1.5 bg-blue-50 text-messenger-blue rounded-lg group-hover:bg-blue-100 transition-colors"><Mail className="w-3.5 h-3.5" /></div>
-                                Email StudyPath RTO
+                                <div className="p-1.5 bg-blue-50 text-messenger-blue rounded-lg group-hover:bg-blue-100 transition-colors"><Send className="w-3.5 h-3.5" /></div>
+                                Notify Sub-Agent
                             </button>
                             <button className="w-full text-left flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-xl text-xs font-medium text-slate-700 transition-colors border border-dashed border-slate-200 hover:border-green-500 group">
                                 <div className="p-1.5 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors"><FileCheck className="w-3.5 h-3.5" /></div>

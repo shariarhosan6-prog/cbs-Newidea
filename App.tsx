@@ -3,7 +3,7 @@ import ConversationList from './components/ConversationList';
 import ChatWindow from './components/ChatWindow';
 import ClientIntelligence from './components/ClientIntelligence';
 import { MOCK_CONVERSATIONS } from './constants';
-import { Conversation, MessageType, SenderType } from './types';
+import { Conversation, MessageType, SenderType, MessageThread } from './types';
 import { Menu, X } from 'lucide-react';
 import { analyzeDocumentMock } from './services/geminiService';
 
@@ -16,17 +16,18 @@ function App() {
   // Get selected conversation object
   const selectedConversation = conversations.find(c => c.id === selectedId) || conversations[0];
 
-  const handleSendMessage = async (text: string, type: MessageType = MessageType.TEXT, fileData?: { name: string, size: string }) => {
-    // 1. Add User Message
+  const handleSendMessage = async (text: string, type: MessageType = MessageType.TEXT, fileData?: { name: string, size: string }, thread: MessageThread = 'source') => {
+    // 1. Add User Message to the specific thread
     const newMessage = {
       id: Date.now().toString(),
-      sender: SenderType.AGENT,
+      sender: SenderType.AGENT, // You are always the Agent
       type: type,
       content: text,
       timestamp: new Date(),
       read: false,
       fileName: fileData?.name,
-      fileSize: fileData?.size
+      fileSize: fileData?.size,
+      thread: thread // Tag the message with the active thread
     };
 
     setConversations(prev => prev.map(c => {
@@ -40,45 +41,69 @@ function App() {
       return c;
     }));
 
-    // 2. Simulate Client Reply (or AI processing of file)
+    // 2. Simulate Reply based on Thread
     setTimeout(async () => {
-       if (type === MessageType.DOCUMENT && fileData) {
-            // AI Analysis Simulation
-            const analysis = await analyzeDocumentMock(fileData.name);
-            
-            const systemMsg = {
-                id: (Date.now() + 1).toString(),
-                sender: SenderType.SYSTEM,
-                type: MessageType.SYSTEM,
-                content: `AI Analysis: Identified as ${analysis.type} (${analysis.confidence}% confidence).`,
-                timestamp: new Date()
-            };
-            
-            setConversations(prev => prev.map(c => {
-                if(c.id === selectedId) {
-                    return {
-                        ...c,
-                        messages: [...c.messages, systemMsg],
-                        // Update document status if it matched
-                        documents: c.documents.map(d => 
-                           d.status === 'missing' && analysis.type.toLowerCase().includes(d.name.toLowerCase().split(' ')[0]) 
-                           ? { ...d, status: 'verified', confidence: analysis.confidence }
-                           : d
-                        )
+       // A. LOGIC FOR SOURCE THREAD (Student/Sub-Agent)
+       if (thread === 'source') {
+           if (type === MessageType.DOCUMENT && fileData) {
+                // AI Analysis Simulation
+                const analysis = await analyzeDocumentMock(fileData.name);
+                
+                const systemMsg = {
+                    id: (Date.now() + 1).toString(),
+                    sender: SenderType.SYSTEM,
+                    type: MessageType.SYSTEM,
+                    content: `AI Analysis: Identified as ${analysis.type} (${analysis.confidence}% confidence).`,
+                    timestamp: new Date(),
+                    thread: 'source' as MessageThread
+                };
+                
+                setConversations(prev => prev.map(c => {
+                    if(c.id === selectedId) {
+                        return {
+                            ...c,
+                            messages: [...c.messages, systemMsg],
+                            // Update document status if it matched
+                            documents: c.documents.map(d => 
+                               d.status === 'missing' && analysis.type.toLowerCase().includes(d.name.toLowerCase().split(' ')[0]) 
+                               ? { ...d, status: 'verified', confidence: analysis.confidence }
+                               : d
+                            )
+                        }
                     }
-                }
-                return c;
-            }));
+                    return c;
+                }));
 
-       } else {
-           // Simple text reply mock
+           } else {
+               // Simple text reply mock
+                const replyMsg = {
+                    id: (Date.now() + 1).toString(),
+                    sender: SenderType.CLIENT,
+                    type: MessageType.TEXT,
+                    content: "Thanks for the update. I'll get on that right away.",
+                    timestamp: new Date(),
+                    read: true,
+                    thread: 'source' as MessageThread
+                };
+                setConversations(prev => prev.map(c => {
+                    if (c.id === selectedId) {
+                        return { ...c, messages: [...c.messages, replyMsg] };
+                    }
+                    return c;
+                }));
+           }
+       } 
+       
+       // B. LOGIC FOR UPSTREAM THREAD (Super Agent)
+       else if (thread === 'upstream') {
             const replyMsg = {
                 id: (Date.now() + 1).toString(),
-                sender: SenderType.CLIENT,
+                sender: SenderType.SUPER_AGENT,
                 type: MessageType.TEXT,
-                content: "Thanks for the update. I'll get on that right away.",
+                content: "Acknowledged. We have updated the file status on our end.",
                 timestamp: new Date(),
-                read: true
+                read: true,
+                thread: 'upstream' as MessageThread
             };
             setConversations(prev => prev.map(c => {
                 if (c.id === selectedId) {
@@ -87,6 +112,7 @@ function App() {
                 return c;
             }));
        }
+
     }, 2000);
   };
 
@@ -113,14 +139,16 @@ function App() {
       />
 
       {/* Main Chat Area */}
+      {/* KEY PROP ADDED: Forces ChatWindow to re-mount/reset when conversation ID changes */}
       <ChatWindow 
+        key={selectedConversation.id} 
         conversation={selectedConversation} 
         onSendMessage={handleSendMessage}
         onToggleInfo={() => setRightPanelOpen(!rightPanelOpen)}
       />
 
       {/* Right Sidebar - Intelligence Panel */}
-      {/* Hidden on mobile unless toggled, Always visible on XL screens unless manually toggled (simplified for this demo) */}
+      {/* Hidden on mobile unless toggled, Always visible on XL screens unless manually toggled */}
       <div className={`
          fixed inset-0 z-30 bg-black/20 lg:hidden transition-opacity
          ${rightPanelOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}

@@ -15,12 +15,14 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       qualificationTarget: 'Diploma of Project Management',
       experienceYears: 5,
     },
+    source: 'direct',
+    superAgentStatus: 'processing',
     unreadCount: 1,
     status: 'active',
     priority: 'high',
     lastActive: new Date(),
     progressStage: 60,
-    currentStep: 'Document Collection',
+    currentStep: 'Mediator Review',
     paymentTotal: 2500,
     paymentPaid: 1250,
     documents: [
@@ -31,21 +33,15 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       { id: 'd5', name: 'USI Transcript', status: 'missing' },
     ],
     messages: [
+      // --- THREAD: SOURCE (Student) ---
       {
         id: 'm1',
         sender: SenderType.AGENT,
         type: MessageType.TEXT,
-        content: "Hi Sarah! Welcome to Stitch RPL. I've reviewed your initial enquiry for the Diploma of Project Management.",
+        content: "Hi Sarah! I'm reviewing your file before sending it to the main processing team.",
         timestamp: new Date(Date.now() - 86400000 * 2),
         read: true,
-      },
-      {
-        id: 'm2',
-        sender: SenderType.CLIENT,
-        type: MessageType.TEXT,
-        content: "Thanks! I'm really keen to get this sorted before my visa renewal.",
-        timestamp: new Date(Date.now() - 86300000 * 2),
-        read: true,
+        thread: 'source'
       },
       {
         id: 'm3',
@@ -54,6 +50,7 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
         content: "Smart Checklist sent: 5 documents required.",
         timestamp: new Date(Date.now() - 86000000 * 2),
         read: true,
+        thread: 'source'
       },
       {
         id: 'm4',
@@ -64,14 +61,36 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
         fileSize: "1.2 MB",
         timestamp: new Date(Date.now() - 3600000),
         read: true,
+        thread: 'source'
+      },
+      
+      // --- THREAD: UPSTREAM (Super Agent) ---
+      {
+        id: 'sa1',
+        sender: SenderType.SUPER_AGENT,
+        type: MessageType.TEXT,
+        content: "Hey, we received the initial intake for Sarah Jenkins. Do you have the USI yet?",
+        timestamp: new Date(Date.now() - 7200000),
+        read: true,
+        thread: 'upstream'
       },
       {
-        id: 'm5',
+        id: 'sa2',
         sender: SenderType.AGENT,
         type: MessageType.TEXT,
-        content: "Received. Our AI system is analyzing it now to extract your work history.",
-        timestamp: new Date(Date.now() - 1800000),
+        content: "Collecting it now. She just sent her CV. Will push full packet in 10 mins.",
+        timestamp: new Date(Date.now() - 3600000),
         read: true,
+        thread: 'upstream'
+      },
+      {
+        id: 'sa3',
+        sender: SenderType.SUPER_AGENT,
+        type: MessageType.TEXT,
+        content: "Perfect. We have a spot in the next batch.",
+        timestamp: new Date(Date.now() - 1800000),
+        read: false,
+        thread: 'upstream'
       },
     ],
   },
@@ -89,6 +108,9 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       qualificationTarget: 'Cert IV in Commercial Cookery',
       experienceYears: 3,
     },
+    source: 'sub_agent',
+    subAgentName: 'Global Ed Consultancy',
+    superAgentStatus: 'not_started',
     unreadCount: 0,
     status: 'lead',
     priority: 'medium',
@@ -102,12 +124,22 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
     ],
     messages: [
       {
+        id: 'm0',
+        sender: SenderType.SYSTEM,
+        type: MessageType.SYSTEM,
+        content: "Lead forwarded by Sub-Agent: Global Ed Consultancy",
+        timestamp: new Date(Date.now() - 90000000),
+        read: true,
+        thread: 'source'
+      },
+      {
         id: 'm1',
         sender: SenderType.AGENT,
         type: MessageType.TEXT,
-        content: "Hi Michael, do you have your current payslips handy?",
+        content: "Hi Michael, Global Ed sent us your profile. Please upload your payslips so we can package this for the Super Agent.",
         timestamp: new Date(Date.now() - 86400000),
         read: true,
+        thread: 'source'
       },
     ],
   },
@@ -125,12 +157,14 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
       qualificationTarget: 'Diploma of Early Childhood Education',
       experienceYears: 7,
     },
+    source: 'direct',
+    superAgentStatus: 'submitted',
     unreadCount: 3,
     status: 'active',
     priority: 'low',
     lastActive: new Date(Date.now() - 7200000),
     progressStage: 80,
-    currentStep: 'RTO Submission',
+    currentStep: 'Super Agent Review',
     paymentTotal: 1800,
     paymentPaid: 1800,
     documents: [],
@@ -139,5 +173,5 @@ export const MOCK_CONVERSATIONS: Conversation[] = [
 ];
 
 export const PROGRESS_STEPS = [
-  'Enrolled', 'Docs', 'Assessment', 'RTO', 'Complete'
+  'Intake', 'Doc Check', 'Mediator Verified', 'Super Agent', 'Complete'
 ];
