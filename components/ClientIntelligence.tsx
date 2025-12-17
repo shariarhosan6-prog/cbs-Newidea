@@ -3,7 +3,7 @@ import { Conversation, DocumentStatus } from '../types';
 import { PROGRESS_STEPS } from '../constants';
 import { 
     User, FileText, CreditCard, Bot, ChevronDown, ChevronUp, 
-    CheckCircle, XCircle, Clock, Send, FileCheck, ArrowRight, Sparkles, MoreHorizontal, Building2, Globe
+    CheckCircle, XCircle, Clock, Send, FileCheck, ArrowRight, Sparkles, MoreHorizontal, Building2, Globe, Mail, FileBarChart, Zap, ShoppingCart
 } from 'lucide-react';
 
 interface Props {
@@ -11,43 +11,8 @@ interface Props {
   isOpen: boolean;
 }
 
-const AccordionItem: React.FC<{
-  title: string;
-  icon: React.ReactNode;
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}> = ({ title, icon, isOpen, onToggle, children }) => (
-  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
-    <button 
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors text-left"
-    >
-        <div className="flex items-center gap-3 text-slate-700 font-semibold text-sm">
-            {icon}
-            {title}
-        </div>
-        {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-    </button>
-    {isOpen && <div className="p-4 pt-0 text-sm animate-in fade-in slide-in-from-top-2 duration-300">{children}</div>}
-  </div>
-);
-
 const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
-    // Accordion State
-    const [openSections, setOpenSections] = useState({
-        channel: true,
-        overview: true,
-        docs: true,
-        profile: false,
-        payment: false,
-        ai: true
-    });
-
-    const toggleSection = (key: keyof typeof openSections) => {
-        setOpenSections(prev => ({ ...prev, [key]: !prev[key] }));
-    };
-
+    
     const getStatusIcon = (status: DocumentStatus['status']) => {
         switch(status) {
             case 'verified': return <CheckCircle className="w-4 h-4 text-emerald-500" />;
@@ -60,243 +25,144 @@ const ClientIntelligence: React.FC<Props> = ({ conversation, isOpen }) => {
     const activeStepIndex = PROGRESS_STEPS.indexOf(conversation.currentStep);
 
     return (
-        <div className={`
-            ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-            fixed lg:static inset-y-0 right-0 z-40
-            w-96 h-full bg-slate-50/50 border-l border-slate-200/60 flex flex-col transition-transform duration-300 ease-in-out shadow-xl lg:shadow-none overflow-y-auto
-        `}>
-            {/* Header */}
-            <div className="p-8 pb-6 text-center bg-white border-b border-slate-100">
-                <div className="relative inline-block mb-4 group">
-                     <div className="absolute inset-0 bg-blue-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                     <img src={conversation.client.avatar} alt="" className="relative w-24 h-24 rounded-full mx-auto object-cover ring-4 ring-white shadow-lg" />
-                     <div className="absolute bottom-1 right-1 bg-gradient-to-tr from-green-500 to-emerald-400 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm">98%</div>
+        <div className="h-full bg-slate-50 flex flex-col overflow-y-auto">
+            {/* 1. Header & Profile Card */}
+            <div className="p-6 bg-white border-b border-slate-100">
+                <div className="flex items-start gap-4 mb-6">
+                     <div className="relative group">
+                         <img src={conversation.client.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover ring-1 ring-slate-100 shadow-sm" />
+                         <div className="absolute -bottom-2 -right-2 bg-white p-1 rounded-full shadow-md">
+                            <div className="bg-gradient-to-tr from-green-500 to-emerald-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">98%</div>
+                         </div>
+                     </div>
+                     <div className="flex-1">
+                         <h2 className="text-lg font-bold text-slate-900 leading-tight">{conversation.client.name}</h2>
+                         <p className="text-xs text-slate-500 font-medium mb-2">{conversation.client.location}</p>
+                         <span className="inline-flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg text-[10px] font-semibold text-slate-600">
+                             {conversation.client.visaStatus} <span className="text-slate-300">|</span> <span className="text-red-500">Exp: {conversation.client.visaExpiry}</span>
+                         </span>
+                     </div>
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 mb-1">{conversation.client.name}</h2>
-                <p className="text-sm text-slate-500 font-medium">{conversation.client.location}</p>
-                <div className="mt-5 flex justify-center gap-3">
-                    <button className="text-xs bg-slate-900 text-white px-5 py-2 rounded-xl font-semibold shadow-lg shadow-slate-200 hover:bg-slate-800 hover:scale-105 transition-all flex items-center gap-2">
-                        <Sparkles className="w-3 h-3 text-yellow-400" />
-                        Mediator Report
-                    </button>
-                    <button className="p-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                    </button>
+
+                {/* Quick Actions Grid (New) */}
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                    {[
+                        { icon: Mail, label: 'Email', color: 'text-blue-500', bg: 'bg-blue-50' },
+                        { icon: FileBarChart, label: 'Report', color: 'text-purple-500', bg: 'bg-purple-50' },
+                        { icon: Zap, label: 'Urgent', color: 'text-orange-500', bg: 'bg-orange-50' },
+                        { icon: MoreHorizontal, label: 'More', color: 'text-slate-500', bg: 'bg-slate-50' },
+                    ].map((action, i) => (
+                        <button key={i} className={`flex flex-col items-center justify-center p-2 rounded-xl transition-transform active:scale-95 hover:bg-opacity-80 ${action.bg}`}>
+                            <action.icon className={`w-5 h-5 mb-1 ${action.color}`} />
+                            <span className="text-[10px] font-semibold text-slate-600">{action.label}</span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 p-5 space-y-4">
+            {/* Content Body */}
+            <div className="flex-1 p-5 space-y-6">
 
-                {/* 0. Channel Info (New for Mediator Logic) */}
-                <AccordionItem 
-                    title="Channel Info" 
-                    icon={<div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-indigo-100"><Globe className="w-4 h-4" /></div>}
-                    isOpen={openSections.channel}
-                    onToggle={() => toggleSection('channel')}
-                >
-                    <div className="space-y-3">
-                         <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                             <div className="flex items-center gap-3">
-                                 <div className={`p-2 rounded-lg ${conversation.source === 'sub_agent' ? 'bg-purple-100 text-purple-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                                     {conversation.source === 'sub_agent' ? <Building2 className="w-4 h-4" /> : <User className="w-4 h-4" />}
-                                 </div>
-                                 <div className="flex flex-col">
-                                     <span className="text-xs text-slate-500 font-medium">Source</span>
-                                     <span className="text-xs font-bold text-slate-800">
-                                         {conversation.source === 'sub_agent' ? conversation.subAgentName : 'Direct Student'}
-                                     </span>
-                                 </div>
-                             </div>
+                {/* Financial Cart Summary (The "Cart") */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-bl from-green-100 to-transparent opacity-50 rounded-bl-full -mr-4 -mt-4"></div>
+                     <div className="flex items-center gap-2 mb-4">
+                         <div className="p-1.5 bg-green-50 rounded-lg text-green-600"><ShoppingCart className="w-4 h-4" /></div>
+                         <h3 className="text-sm font-bold text-slate-800">Financial Summary</h3>
+                     </div>
+                     
+                     <div className="space-y-3">
+                         <div className="flex justify-between items-center text-xs">
+                             <span className="text-slate-500">Course Fee</span>
+                             <span className="font-semibold text-slate-800">${conversation.paymentTotal.toLocaleString()}</span>
                          </div>
-                         
-                         {/* Super Agent Action */}
-                         <div className="pt-2">
-                            <button className="w-full relative overflow-hidden group bg-gradient-to-r from-messenger-blue to-indigo-600 text-white p-3 rounded-xl shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
-                                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                <div className="relative flex items-center justify-center gap-2 font-semibold text-xs">
-                                    <Send className="w-3.5 h-3.5" />
-                                    Submit to Super Agent
-                                </div>
-                            </button>
-                            <p className="text-[10px] text-center text-slate-400 mt-2">
-                                Status: <span className="font-medium text-slate-600 capitalize">{conversation.superAgentStatus.replace('_', ' ')}</span>
-                            </p>
+                         <div className="flex justify-between items-center text-xs">
+                             <span className="text-slate-500">Discount applied</span>
+                             <span className="font-semibold text-green-600">-$0.00</span>
                          </div>
-                    </div>
-                </AccordionItem>
+                         <div className="h-px bg-slate-100 my-1"></div>
+                         <div className="flex justify-between items-center">
+                             <span className="text-xs font-bold text-slate-700">Total Due</span>
+                             <span className="text-sm font-bold text-slate-900">${(conversation.paymentTotal - conversation.paymentPaid).toLocaleString()}</span>
+                         </div>
+                     </div>
+                     
+                     <div className="mt-4 flex gap-2">
+                         <div className="flex-1 bg-slate-50 rounded-lg p-2 text-center">
+                             <span className="block text-[10px] text-slate-400 uppercase tracking-wide">Paid</span>
+                             <span className="text-xs font-bold text-green-600">${conversation.paymentPaid.toLocaleString()}</span>
+                         </div>
+                         <button className="flex-1 bg-slate-900 text-white rounded-lg py-2 text-xs font-bold hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200">
+                             Send Invoice
+                         </button>
+                     </div>
+                </div>
 
-
-                {/* 1. Status Overview */}
-                <AccordionItem 
-                    title="Workflow Status" 
-                    icon={<div className="w-6 h-6 rounded-lg bg-blue-50 text-messenger-blue flex items-center justify-center text-xs font-bold ring-1 ring-blue-100">%</div>}
-                    isOpen={openSections.overview}
-                    onToggle={() => toggleSection('overview')}
-                >
-                    <div className="mt-2">
-                        <div className="flex justify-between text-xs mb-2 font-semibold text-slate-600">
-                            <span>Completion</span>
-                            <span>{conversation.progressStage}%</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2.5 mb-6 relative overflow-hidden shadow-inner">
-                            <div 
-                                className="bg-gradient-to-r from-messenger-blue to-cyan-400 h-2.5 rounded-full transition-all duration-1000 ease-out relative shadow-sm" 
-                                style={{ width: `${conversation.progressStage}%` }}
-                            >
-                                <div className="absolute inset-0 bg-white/30 animate-[pulse_2s_infinite]"></div>
-                            </div>
-                        </div>
-                        <div className="flex justify-between items-start text-xs text-slate-400 relative">
-                             {/* Connecting Line */}
-                             <div className="absolute top-2 left-0 w-full h-0.5 bg-slate-100 -z-10"></div>
-                             
+                {/* Status Timeline */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Application Progress</h3>
+                    <div className="relative pl-2">
+                         <div className="absolute top-0 bottom-0 left-[5px] w-0.5 bg-slate-100"></div>
+                         <div className="space-y-4">
                              {PROGRESS_STEPS.map((step, i) => {
                                  const isActive = conversation.currentStep === step;
                                  const isCompleted = i < activeStepIndex;
                                  
                                  return (
-                                     <div key={step} className={`flex flex-col items-center gap-2 transition-all duration-500 ${isActive ? 'text-messenger-blue font-bold' : (isCompleted ? 'text-slate-600 font-medium' : '')}`}>
-                                         <div className="relative flex items-center justify-center h-4 w-4">
-                                             {isActive && (
-                                                <>
-                                                    <span className="absolute h-full w-full rounded-full bg-messenger-blue opacity-20 animate-ping"></span>
-                                                    <span className="absolute h-3 w-3 rounded-full bg-messenger-blue opacity-40 animate-pulse"></span>
-                                                </>
-                                             )}
-                                             <div className={`w-2.5 h-2.5 rounded-full ring-4 ring-white transition-colors duration-500 ${isActive || isCompleted ? 'bg-messenger-blue shadow-sm' : 'bg-slate-200'}`}></div>
-                                         </div>
-                                         {/* Only show label for active or first/last to save space if needed, or rotate */}
-                                         <span className={`text-[9px] text-center max-w-[50px] leading-tight ${isActive ? 'bg-blue-50 px-1 rounded' : ''}`}>{step}</span>
+                                     <div key={step} className="flex items-center gap-3 relative">
+                                         <div className={`w-3 h-3 rounded-full ring-4 ring-white z-10 ${isActive ? 'bg-messenger-blue' : (isCompleted ? 'bg-green-500' : 'bg-slate-200')}`}></div>
+                                         <span className={`text-xs ${isActive ? 'font-bold text-slate-800' : 'font-medium text-slate-500'}`}>{step}</span>
+                                         {isActive && <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[9px] font-bold rounded ml-auto">Current</span>}
                                      </div>
                                  );
                              })}
+                         </div>
+                    </div>
+                </div>
+
+                {/* AI Document Monitor */}
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 shadow-lg shadow-indigo-200 text-white relative overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
+                    
+                    <div className="flex items-center justify-between mb-4 relative z-10">
+                        <div className="flex items-center gap-2">
+                            <Bot className="w-5 h-5 text-indigo-200" />
+                            <h3 className="font-bold text-sm">AI Agent</h3>
                         </div>
+                        <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium backdrop-blur-sm">Active</span>
                     </div>
-                </AccordionItem>
 
-                 {/* 2. AI Task Monitor */}
-                 <AccordionItem 
-                    title="AI Task Monitor" 
-                    icon={<div className="w-6 h-6 rounded-lg bg-purple-50 text-messenger-purple flex items-center justify-center ring-1 ring-purple-100"><Bot className="w-4 h-4" /></div>}
-                    isOpen={openSections.ai}
-                    onToggle={() => toggleSection('ai')}
-                >
-                    <div className="space-y-3">
-                        <div className="bg-gradient-to-br from-purple-50 to-white border border-purple-100 rounded-xl p-3 shadow-sm">
-                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-xs font-bold text-messenger-purple flex items-center gap-1.5">
-                                    <Sparkles className="w-3.5 h-3.5" /> Auto-Verify
-                                </span>
-                                <span className="text-[10px] font-semibold bg-white text-messenger-purple px-2 py-0.5 rounded-full border border-purple-100 shadow-sm">Active</span>
-                             </div>
-                             <p className="text-xs text-slate-600 mb-3 leading-relaxed">Checking document validity before Super Agent submission.</p>
-                             <div className="flex gap-2">
-                                 <button className="flex-1 text-[10px] font-medium py-1.5 bg-white border border-slate-200 rounded-lg text-slate-600 hover:border-messenger-purple hover:text-messenger-purple transition-all shadow-sm">
-                                    View Gaps
-                                 </button>
-                             </div>
+                    <div className="space-y-3 relative z-10">
+                        <div className="flex justify-between items-center text-xs text-indigo-100">
+                            <span>Document Check</span>
+                            <span className="text-white font-bold">{conversation.documents.filter(d => d.status === 'verified').length}/{conversation.documents.length}</span>
                         </div>
-
-                        <div className="space-y-2 pt-1">
-                            <button className="w-full text-left flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-xl text-xs font-medium text-slate-700 transition-colors border border-dashed border-slate-200 hover:border-messenger-blue group">
-                                <div className="p-1.5 bg-blue-50 text-messenger-blue rounded-lg group-hover:bg-blue-100 transition-colors"><Send className="w-3.5 h-3.5" /></div>
-                                Notify Sub-Agent
-                            </button>
-                            <button className="w-full text-left flex items-center gap-3 p-2.5 hover:bg-slate-50 rounded-xl text-xs font-medium text-slate-700 transition-colors border border-dashed border-slate-200 hover:border-green-500 group">
-                                <div className="p-1.5 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors"><FileCheck className="w-3.5 h-3.5" /></div>
-                                Validate Visa Status
-                            </button>
+                        <div className="w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
+                            <div className="bg-white h-full rounded-full w-3/5"></div>
                         </div>
+                        <p className="text-[11px] text-indigo-100 leading-relaxed mt-1">
+                            Waiting for <span className="font-bold text-white">USI Transcript</span>. Auto-reminder scheduled for 2:00 PM.
+                        </p>
                     </div>
-                </AccordionItem>
 
-                {/* 3. Document Tracker */}
-                <AccordionItem 
-                    title={`Documents (${conversation.documents.filter(d => d.status === 'verified').length}/${conversation.documents.length})`} 
-                    icon={<div className="w-6 h-6 rounded-lg bg-orange-50 text-orange-500 flex items-center justify-center ring-1 ring-orange-100"><FileText className="w-4 h-4" /></div>}
-                    isOpen={openSections.docs}
-                    onToggle={() => toggleSection('docs')}
-                >
-                    <div className="space-y-2">
-                        {conversation.documents.map(doc => (
-                            <div key={doc.id} className="flex items-center justify-between p-2.5 bg-slate-50/50 border border-slate-100 rounded-xl group hover:border-slate-200 hover:bg-slate-50 transition-all">
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                    {getStatusIcon(doc.status)}
-                                    <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
-                                        {doc.status === 'verified' && (
-                                            <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
-                                                AI Conf: {doc.confidence}%
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                                <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-messenger-blue shadow-sm">
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </button>
-                            </div>
-                        ))}
-                         <button className="w-full py-2.5 text-xs text-messenger-blue font-semibold hover:bg-blue-50 rounded-xl border border-dashed border-blue-200 mt-2 transition-colors">
-                            + Request New Document
-                        </button>
-                    </div>
-                </AccordionItem>
+                    <button className="mt-4 w-full bg-white text-indigo-600 py-2 rounded-lg text-xs font-bold hover:bg-indigo-50 transition-colors">
+                        View Analysis
+                    </button>
+                </div>
 
-                {/* 4. Client Profile */}
-                <AccordionItem 
-                    title="Client Profile" 
-                    icon={<div className="w-6 h-6 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center ring-1 ring-slate-200"><User className="w-4 h-4" /></div>}
-                    isOpen={openSections.profile}
-                    onToggle={() => toggleSection('profile')}
-                >
-                    <div className="space-y-3 text-xs">
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                <label className="text-slate-400 font-medium block mb-1">Target Qual</label>
-                                <p className="font-semibold text-slate-700">{conversation.client.qualificationTarget}</p>
-                            </div>
-                            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                <label className="text-slate-400 font-medium block mb-1">Experience</label>
-                                <p className="font-semibold text-slate-700">{conversation.client.experienceYears} Years</p>
-                            </div>
-                            <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                <label className="text-slate-400 font-medium block mb-1">Visa</label>
-                                <p className="font-semibold text-slate-700">{conversation.client.visaStatus}</p>
-                            </div>
-                             <div className="p-2.5 bg-red-50 rounded-xl border border-red-100">
-                                <label className="text-red-400 font-medium block mb-1">Expires</label>
-                                <p className="font-bold text-red-600">{conversation.client.visaExpiry}</p>
-                            </div>
-                        </div>
-                    </div>
-                </AccordionItem>
+                {/* Source/Upstream Info */}
+                <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 border-dashed">
+                     <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                         <span>Source</span>
+                         <span className="font-semibold text-slate-700">{conversation.source === 'sub_agent' ? 'B2B Partner' : 'Direct Lead'}</span>
+                     </div>
+                     <div className="flex items-center justify-between text-xs text-slate-500">
+                         <span>Upstream RTO</span>
+                         <span className="font-semibold text-indigo-600">StudyPath RTO</span>
+                     </div>
+                </div>
 
-                 {/* 5. Payment */}
-                 <AccordionItem 
-                    title="Payment Status" 
-                    icon={<div className="w-6 h-6 rounded-lg bg-green-50 text-green-600 flex items-center justify-center ring-1 ring-green-100"><CreditCard className="w-4 h-4" /></div>}
-                    isOpen={openSections.payment}
-                    onToggle={() => toggleSection('payment')}
-                >
-                    <div className="space-y-3 text-xs">
-                       <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                           <span className="text-slate-500 font-medium">Total Fee</span>
-                           <span className="font-bold text-slate-900 text-sm">${conversation.paymentTotal.toLocaleString()}</span>
-                       </div>
-                       <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-xl border border-emerald-100">
-                           <span className="text-emerald-700 font-medium">Paid</span>
-                           <span className="font-bold text-emerald-700 text-sm">${conversation.paymentPaid.toLocaleString()}</span>
-                       </div>
-                        <div className="flex justify-between items-center bg-red-50 p-3 rounded-xl border border-red-100">
-                           <span className="text-red-700 font-medium">Balance</span>
-                           <span className="font-bold text-red-700 text-sm">${(conversation.paymentTotal - conversation.paymentPaid).toLocaleString()}</span>
-                       </div>
-                       <button className="w-full bg-messenger-blue text-white py-2.5 rounded-xl font-semibold hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 mt-1">
-                           Send Payment Link
-                       </button>
-                    </div>
-                </AccordionItem>
             </div>
         </div>
     );

@@ -6,15 +6,39 @@ export enum MessageType {
 }
 
 export enum SenderType {
-  CLIENT = 'client', // The Student or Sub-Agent
-  AGENT = 'agent',   // You (The Mediator)
-  SUPER_AGENT = 'super_agent', // The Upstream RTO/Master Agent
+  CLIENT = 'client', 
+  AGENT = 'agent',   
+  SUPER_AGENT = 'super_agent',
   AI = 'ai',
   SYSTEM = 'system',
 }
 
 export type LeadSource = 'direct' | 'sub_agent';
-export type MessageThread = 'source' | 'upstream'; // 'source' = Student/Sub-agent, 'upstream' = Super Agent
+export type MessageThread = 'source' | 'upstream'; 
+
+// CRM specific types
+export type ViewState = 'dashboard' | 'pipeline' | 'inbox' | 'partners' | 'finance';
+
+export type ApplicationStage = 'lead' | 'evidence_collection' | 'mediator_review' | 'rto_submission' | 'certified';
+
+export interface ApplicationCard {
+  id: string;
+  clientName: string;
+  avatar: string;
+  qualification: string;
+  stage: ApplicationStage;
+  source: string;
+  value: number;
+  lastUpdate: Date;
+  missingDocs: number;
+}
+
+export interface DashboardStats {
+  totalRevenue: number;
+  activeApplications: number;
+  pendingCommissions: number;
+  conversionRate: number;
+}
 
 export interface Message {
   id: string;
@@ -25,7 +49,7 @@ export interface Message {
   fileName?: string;
   fileSize?: string;
   read?: boolean;
-  thread: MessageThread; // New field to segregate chats
+  thread: MessageThread;
 }
 
 export interface DocumentStatus {
@@ -65,10 +89,4 @@ export interface Conversation {
   documents: DocumentStatus[];
   paymentTotal: number;
   paymentPaid: number;
-}
-
-export interface QuickReply {
-  id: string;
-  label: string;
-  text: string;
 }

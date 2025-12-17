@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, MessageType, SenderType, MessageThread } from '../types';
-import { Phone, Video, Info, Paperclip, Mic, Smile, Send, Sparkles, FileText, Download, Building2, User, Globe, Briefcase, ArrowRight } from 'lucide-react';
+import { Phone, Video, Info, Paperclip, Mic, Smile, Send, Sparkles, FileText, Download, Building2, User, Globe, Briefcase, ArrowRight, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { getSmartSuggestions } from '../services/geminiService';
 
 interface Props {
   conversation: Conversation;
   onSendMessage: (text: string, type?: MessageType, fileData?: { name: string, size: string }, thread?: MessageThread) => void;
   onToggleInfo: () => void;
+  isInfoOpen?: boolean; // New prop to track state
 }
 
-const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo }) => {
+const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo, isInfoOpen = false }) => {
   const [inputText, setInputText] = useState('');
   const [activeThread, setActiveThread] = useState<MessageThread>('source'); // 'source' or 'upstream'
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -119,16 +120,18 @@ const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo
             </div>
 
             <div className="flex items-center gap-2">
+                {/* Panel Toggle Button (Always Visible) */}
                 <button 
-                    className="p-2.5 bg-white text-slate-400 hover:text-messenger-blue hover:bg-blue-50 hover:shadow-md rounded-full transition-all border border-slate-100 lg:hidden"
+                    className={`p-2.5 rounded-full transition-all border ${isInfoOpen ? 'bg-blue-50 text-messenger-blue border-blue-100' : 'bg-white text-slate-400 border-slate-100 hover:text-messenger-blue hover:shadow-md'}`}
                     onClick={onToggleInfo}
+                    title="Toggle Client Intelligence"
                 >
-                    <Info className="w-5 h-5" />
+                    {isInfoOpen ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                 </button>
             </div>
         </div>
 
-        {/* Channel Switcher (The key feature) */}
+        {/* Channel Switcher */}
         <div className="px-6 pb-4">
             <div className="bg-slate-100 p-1.5 rounded-xl flex relative border border-slate-200/50">
                 {/* Animated Background Pill */}
@@ -170,7 +173,7 @@ const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo
       {/* Spacer for Double Header */}
       <div className="h-[136px] shrink-0"></div>
 
-      {/* AI Context Bar (Only for Source/Student Thread) */}
+      {/* AI Context Bar */}
       {activeThread === 'source' && missingDocsCount > 0 && (
         <div className="mx-6 mt-4 bg-white/60 backdrop-blur-sm border border-messenger-purple/20 rounded-xl px-4 py-3 flex items-center justify-between shadow-sm animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-2.5 text-sm font-medium text-slate-700">
@@ -238,7 +241,6 @@ const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo
                    </div>
                ) : (
                 <div className={`flex max-w-[80%] md:max-w-[70%] ${msg.sender === SenderType.AGENT ? 'flex-row-reverse' : 'flex-row'} gap-3 group`}>
-                    {/* Avatar Logic */}
                     {msg.sender !== SenderType.AGENT && (
                         <div className="self-end mb-4">
                             {msg.sender === SenderType.SUPER_AGENT ? (
@@ -252,7 +254,6 @@ const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo
                     )}
                     
                     <div className="flex flex-col gap-1">
-                        {/* Sender Name for Upstream */}
                         {activeThread === 'upstream' && msg.sender !== SenderType.AGENT && (
                             <span className="text-[10px] text-indigo-500 font-bold ml-1">StudyPath RTO</span>
                         )}
@@ -284,7 +285,6 @@ const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo
                       </div>
                       <span className={`text-[10px] font-medium text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ${msg.sender === SenderType.AGENT ? 'text-right' : 'text-left'}`}>
                             {new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                            {msg.sender === SenderType.AGENT && (msg.read ? ' • Read' : ' • Sent')}
                       </span>
                     </div>
                 </div>
@@ -296,7 +296,7 @@ const ChatWindow: React.FC<Props> = ({ conversation, onSendMessage, onToggleInfo
       {/* Input Area */}
       <div className={`p-6 bg-white/80 backdrop-blur-md border-t z-20 transition-colors duration-300 ${activeThread === 'upstream' ? 'border-indigo-100 bg-indigo-50/30' : 'border-slate-100'}`}>
         
-        {/* Smart Suggestions (Only Source) */}
+        {/* Smart Suggestions */}
         {suggestions.length > 0 && activeThread === 'source' && (
             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
                 {suggestions.map((sug, idx) => (
