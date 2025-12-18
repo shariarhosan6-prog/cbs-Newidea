@@ -20,28 +20,25 @@ export type MessageThread = 'source' | 'upstream';
 // CRM specific types
 export type ViewState = 'dashboard' | 'pipeline' | 'inbox' | 'partners' | 'finance';
 
-// UPDATED: Combined Stages for both workflows
+// Added ApplicationType for pipeline switching
+export type ApplicationType = 'rpl' | 'admission';
+
+// Expanded ApplicationStage to include both RPL and University Admission stages
 export type ApplicationStage = 
-  // RPL Stages
   | 'lead' 
   | 'evidence_collection' 
   | 'mediator_review' 
   | 'rto_submission' 
   | 'certified'
-  // Admission Stages
   | 'app_lodged'
   | 'conditional_offer'
   | 'gte_assessment'
-  | 'tuition_payment'
   | 'coe_issued';
-
-export type ApplicationType = 'rpl' | 'admission';
 
 export interface ApplicationCard {
   id: string;
-  type: ApplicationType; // New field to distinguish
-  clientName: string;
-  avatar?: string;
+  type: ApplicationType; // Added to distinguish between pipelines
+  clientName: string; // Renamed from name to match usage in Kanban component
   qualification: string;
   stage: ApplicationStage;
   tags: string[];

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Conversation, Message, MessageType, SenderType, MessageThread } from '../types';
 import { Phone, Video, Info, Paperclip, Mic, Smile, Send, Sparkles, FileText, Download, Building2, User, Globe, Briefcase, ArrowRight, PanelRightClose, PanelRightOpen } from 'lucide-react';
